@@ -277,8 +277,8 @@
     </header>
     <div class="content" id="home-content"></div>
     <div id="install-banner">
-      <p data-i18n="install_banner_text">📲 Add to your home screen for the full app experience</p>
-      <button onclick="installApp()" data-i18n="install_btn">Install</button>
+      <p id="install-banner-text" data-i18n="install_banner_text">📲 Add to your home screen for the full app experience</p>
+      <button id="install-btn" onclick="installApp()" data-i18n="install_btn">Install</button>
     </div>
     <nav class="bottom-nav">
       <button class="nav-btn active" onclick="backToHome()"><span class="mdi">dashboard</span><span data-i18n="nav_dashboard">Dashboard</span></button>
@@ -619,6 +619,7 @@ const i18n = {
     ph_optional_note:"Optional note",
     no_tag_opt:"— No tag —",
     install_banner_text:"📲 Add to your home screen for the full app experience",
+    install_banner_ios:"📲 To install: tap Share, then \"Add to Home Screen\"",
     install_btn:"Install",
     no_projects_title:"No projects yet",
     no_projects_sub:"Create your first project to start tracking expenses.",
@@ -760,6 +761,7 @@ const i18n = {
     ph_optional_note:"விருப்பமான குறிப்பு",
     no_tag_opt:"— குறிச்சொல் இல்லை —",
     install_banner_text:"📲 முழு அனுபவத்திற்கு முகப்புத் திரையில் சேர்க்கவும்",
+    install_banner_ios:"📲 நிறுவ: Share தட்டி, \"Add to Home Screen\" தேர்வு செய்யவும்",
     install_btn:"நிறுவு",
     no_projects_title:"திட்டங்கள் இல்லை",
     no_projects_sub:"செலவுகளை கண்காணிக்க உங்கள் முதல் திட்டத்தை உருவாக்கவும்.",
@@ -1983,12 +1985,25 @@ function installApp() {
   });
 }
 
+// iOS Safari never fires beforeinstallprompt — show a manual "Add to Home
+// Screen" hint instead (only when not already running as an installed app).
+function maybeShowIosInstallHint() {
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  if (isIos && !isStandalone) {
+    document.getElementById("install-banner-text").textContent = t("install_banner_ios");
+    document.getElementById("install-btn").style.display = "none";
+    document.getElementById("install-banner").classList.add("show");
+  }
+}
+
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
 load();
 applyLang();
 renderHome();
+maybeShowIosInstallHint();
 
 </script>
 </body>

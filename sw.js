@@ -1,7 +1,11 @@
-const CACHE = "expense-tracker-v3";
+const CACHE = "expense-tracker-v4";
+// Resolve paths relative to the service worker's own location so the app works
+// from any base path (e.g. GitHub Pages project subpath "/Expense-Tracker/").
+const INDEX = new URL("index.html", self.location).href;
 const ASSETS = [
-  "/index.html",
-  "/manifest.json",
+  "./",
+  "./index.html",
+  "./manifest.json",
   "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
 ];
 
@@ -37,10 +41,10 @@ self.addEventListener("fetch", e => {
     e.respondWith(
       fetch(req).then(res => {
         const clone = res.clone();
-        caches.open(CACHE).then(c => c.put("/index.html", clone));
+        caches.open(CACHE).then(c => c.put(INDEX, clone));
         return res;
       }).catch(() =>
-        caches.match(req).then(cached => cached || caches.match("/index.html"))
+        caches.match(req).then(cached => cached || caches.match(INDEX))
       )
     );
     return;
