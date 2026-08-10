@@ -204,8 +204,8 @@
   #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--pr);color:#fff;padding:9px 22px;border-radius:999px;font-size:13px;font-family:inherit;z-index:999;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 2px 12px rgba(0,0,0,.2)}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* ── Install banner ── */
-  #install-banner{display:none;background:var(--inv-s);color:#fff;padding:12px 16px;align-items:center;justify-content:space-between;gap:10px;position:sticky;bottom:0;z-index:50}
+  /* ── Install banner (sits just above the bottom nav) ── */
+  #install-banner{display:none;background:var(--inv-s);color:#fff;padding:12px 16px;align-items:center;justify-content:space-between;gap:10px;position:fixed;left:50%;transform:translateX(-50%);width:100%;max-width:480px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:60;box-shadow:0 -2px 10px rgba(0,0,0,.15)}
   #install-banner.show{display:flex}
   #install-banner p{font-size:13px;line-height:1.4;flex:1}
   #install-banner button{background:#fff;color:var(--on-s);border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit}
@@ -249,6 +249,8 @@
   #txn-amount{font-size:32px;font-weight:700;text-align:center;border:none;background:transparent;outline:none;width:160px;color:var(--on-s);font-family:inherit;-moz-appearance:textfield;appearance:textfield}
   #txn-amount::-webkit-outer-spin-button,#txn-amount::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .amount-underline{height:1px;width:75%;background:var(--outline);margin-top:8px}
+  .link-btn{background:none;border:none;color:#1565c0;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:2px;padding:0}
+  .inline-add-btn{background:var(--sec);border:none;border-radius:10px;padding:0 18px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
 
   /* ── Fixed bottom bar ── */
   .fixed-bottom-bar{position:fixed;bottom:0;width:100%;max-width:480px;left:50%;transform:translateX(-50%);background:var(--s0);border-top:1px solid var(--outline);padding:16px;z-index:50;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
@@ -413,6 +415,7 @@
         <div id="proj-menu" class="popover">
           <button class="popover-item" onclick="hideProjMenu();document.getElementById('importFileP').click()"><span class="mdi">file_upload</span><span data-i18n="import_label">Import</span></button>
           <button class="popover-item" onclick="hideProjMenu();exportAll()"><span class="mdi">file_download</span><span data-i18n="export_label">Export</span></button>
+          <button class="popover-item" onclick="hideProjMenu();showSubScreen('tags')"><span class="mdi">local_offer</span><span data-i18n="manage_tags_title">Manage tags</span></button>
           <button class="popover-item" onclick="hideProjMenu();showSubScreen('history')"><span class="mdi">receipt_long</span><span data-i18n="history_title">History</span></button>
         </div>
         <input type="file" id="importFileP" accept=".json" style="display:none" onchange="importAll(event)"/>
@@ -441,8 +444,15 @@
           <div class="amount-underline"></div>
         </div>
         <div id="tag-field-wrap" style="display:flex;flex-direction:column">
-          <label class="lbl" data-i18n="tag_lbl" for="txn-tag">Tag</label>
-          <select id="txn-tag" class="inp"><option value="" data-i18n="select_tag_opt">— Select tag —</option></select>
+          <div class="row-sb" style="align-items:flex-end">
+            <label class="lbl" data-i18n="tag_lbl" for="txn-tag" style="margin-bottom:0">Tag</label>
+            <button type="button" class="link-btn" onclick="toggleInlineTagAdd()"><span class="mdi" style="font-size:16px">add</span><span data-i18n="new_tag_link">New tag</span></button>
+          </div>
+          <select id="txn-tag" class="inp" style="margin-top:5px"><option value="" data-i18n="select_tag_opt">— Select tag —</option></select>
+          <div id="inline-tag-add" style="display:none;gap:8px;margin-top:8px">
+            <input type="text" id="inline-tag-input" class="inp" data-i18n-ph="tag_inp_ph" placeholder="e.g. Cement, Labour…" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addInlineTag();}"/>
+            <button type="button" class="inline-add-btn" onclick="addInlineTag()" data-i18n="add_tag_btn">Add</button>
+          </div>
         </div>
         <div id="method-field-wrap" style="display:none;flex-direction:column">
           <label class="lbl" data-i18n="payment_method_lbl" for="txn-method">Payment method</label>
@@ -592,6 +602,7 @@ const i18n = {
     amount_spent_lbl:"Amount spent (₹)",
     tag_lbl:"Tag",
     select_tag_opt:"— Select tag —",
+    new_tag_link:"New tag",
     ph_amount_8k:"e.g. 8000",
     ph_expense_note:"e.g. Cement 50 bags",
     add_expense_btn:"Add expense",
@@ -734,6 +745,7 @@ const i18n = {
     amount_spent_lbl:"செலவு தொகை (₹)",
     tag_lbl:"குறிச்சொல்",
     select_tag_opt:"— குறிச்சொல் தேர்ந்தெடுக்கவும் —",
+    new_tag_link:"புதிய குறிச்சொல்",
     ph_amount_8k:"எ.கா. 8000",
     ph_expense_note:"எ.கா. சிமெண்ட் 50 பைகள்",
     add_expense_btn:"செலவு சேர்க்கவும்",
@@ -1706,6 +1718,31 @@ function populateTagSelect() {
   const hint = document.getElementById("no-tag-hint");
   hint.dataset.hasNoTags = allTags.length===0 ? "1" : "0";
   hint.style.display = (allTags.length===0 && currentTxnType==="out") ? "block" : "none";
+  const inline = document.getElementById("inline-tag-add");
+  if (inline) inline.style.display = "none";
+}
+
+// Add a tag inline from the Add-Expense form's tag field
+function toggleInlineTagAdd() {
+  const w = document.getElementById("inline-tag-add");
+  const show = w.style.display === "none" || !w.style.display;
+  w.style.display = show ? "flex" : "none";
+  if (show) { const inp = document.getElementById("inline-tag-input"); inp.value = ""; setTimeout(()=>inp.focus(), 50); }
+}
+
+function addInlineTag() {
+  const inp = document.getElementById("inline-tag-input");
+  const name = inp.value.trim(); if (!name) return;
+  const p = currentProject(); if (!p) return;
+  if (p.tags.includes(name)) {
+    showToast(t("toast_tag_exists"));
+  } else {
+    updateProject(pr => { pr.tags.push(name); });
+    showToast(t("toast_tag_created"));
+  }
+  populateTagSelect();
+  document.getElementById("txn-tag").value = name;
+  document.getElementById("inline-tag-add").style.display = "none";
 }
 
 // ═══════════════════════════════════════════════════════
