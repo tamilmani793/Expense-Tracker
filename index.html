@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#f8f9ff"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Expense Tracker"/>
+<title>Expense Tracker</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f8f9ff; --s0:#ffffff; --s-low:#eff4ff; --s-mid:#e5eeff;
+    --on-s:#0b1c30; --on-sv:#45464d; --inv-s:#213145; --inv-on:#eaf1ff;
+    --outline:#c6c6cd; --pr:#000000; --pr-ctr:#131b2e; --inv-pr:#bec6e0;
+    --sec:#1b6b51; --sec-ctr:#a6f2d1; --err:#ba1a1a; --err-ctr:#ffdad6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:var(--bg);font-family:'Hanken Grotesk','Noto Sans Tamil',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--on-s);overflow-x:hidden}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;position:relative}
+
+  .mdi{font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;font-size:24px;line-height:1;user-select:none}
+  .mdi.fill{font-variation-settings:'FILL' 1}
+
+  /* ── Screens ── */
+  .screen{display:none;flex-direction:column;min-height:100vh;background:var(--bg)}
+  .screen.active{display:flex}
+
+  /* ── Header ── */
+  .hdr{background:var(--s0);border-bottom:1px solid var(--outline);padding:13px 16px calc(13px + env(safe-area-inset-top,0px)) 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:30}
+  .hdr-title{font-weight:700;font-size:18px;color:var(--on-s)}
+  .hdr-sub{font-size:12px;color:var(--on-sv);margin-top:1px}
+  .hdr-actions{display:flex;gap:6px;align-items:center}
+  .icon-btn{background:transparent;border:none;border-radius:999px;padding:8px;color:var(--on-sv);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .globe-btn{background:var(--pr-ctr);color:var(--inv-pr);border-radius:999px;padding:6px 10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .globe-btn .mdi{color:inherit}
+  .back-btn{background:none;border:none;cursor:pointer;padding:0 8px 0 0;display:flex;align-items:center}
+  .back-btn .mdi{font-size:28px;color:var(--on-sv)}
+  .hdr-btn{background:var(--s-low);border:1px solid var(--outline);border-radius:8px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;color:var(--on-sv);font-family:inherit;display:flex;align-items:center;gap:4px}
+  .hdr-btn:active{background:var(--s-mid)}
+
+  /* ── Header popover menu ── */
+  .popover{display:none;position:absolute;top:calc(100% + 8px);right:0;background:var(--s0);border:1px solid var(--outline);border-radius:12px;box-shadow:0 8px 24px rgba(15,23,42,.15);padding:6px;min-width:190px;z-index:100;flex-direction:column;gap:2px}
+  .popover.open{display:flex}
+  .popover-item{display:flex;align-items:center;gap:12px;padding:11px 12px;background:none;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600;color:var(--on-s);text-align:left;width:100%}
+  .popover-item:active{background:var(--s-low)}
+  .popover-item .mdi{font-size:20px;color:var(--on-sv)}
+
+  /* ── Money In / Out pill buttons ── */
+  .money-btn{border:none;border-radius:999px;padding:14px 0;color:#fff;font-weight:700;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;box-shadow:0 2px 8px rgba(15,23,42,.12)}
+  .money-btn:active{opacity:.9}
+  .money-btn .mdi{font-size:20px}
+
+  /* ── Content area ── */
+  .content{padding:16px 16px 90px;flex:1}
+
+  /* ── Cards ── */
+  .card{background:var(--s0);border-radius:24px;box-shadow:0 4px 12px rgba(15,23,42,0.06);border:1px solid rgba(198,198,205,.35);padding:20px;margin-bottom:12px}
+
+  /* ── Inputs ── */
+  .inp{width:100%;font-size:15px;border:1px solid var(--outline);border-radius:8px;padding:12px 14px;background:#fff;color:var(--on-s);font-family:inherit;outline:none;appearance:none;-webkit-appearance:none}
+  .inp:focus{border:2px solid var(--pr);padding:11px 13px}
+  .inp-big{font-size:24px;font-weight:700}
+  .lbl{font-size:13px;font-weight:600;color:var(--on-sv);display:block;margin-bottom:6px;margin-top:14px}
+  .lbl:first-child{margin-top:0}
+
+  /* ── Buttons ── */
+  .btn{width:100%;border:none;border-radius:16px;padding:16px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+  .btn:active{opacity:.85}
+  .btn-green{background:#2e7d32;color:#fff}
+  .btn-red{background:#c62828;color:#fff}
+  .btn-dark{background:var(--pr);color:#fff}
+  .btn-dark:disabled{background:#ccc;cursor:default}
+  .btn-ghost{background:var(--s0);border:2px dashed var(--outline);color:var(--on-sv);font-weight:600}
+
+  /* ── Grid ── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+  /* ── Summary stat ── */
+  .stat{border-radius:16px;padding:12px 8px;text-align:center}
+  .stat-label{font-size:11px;font-weight:600;margin-bottom:3px}
+  .stat-value{font-size:16px;font-weight:700}
+  .stat-green{background:#ECFDF5}.stat-green .stat-label{color:#059669}.stat-green .stat-value{color:#065F46}
+  .stat-red{background:#FEF2F2}.stat-red .stat-label{color:#DC2626}.stat-red .stat-value{color:#991B1B}
+  .stat-blue{background:#F0F9FF}.stat-blue .stat-label{color:#0284C7}.stat-blue .stat-value{color:#0369A1}
+  .stat-orange{background:#fff3e0}.stat-orange .stat-label{color:#e65100}.stat-orange .stat-value{color:#bf360c}
+
+  /* ── Big action buttons ── */
+  .action-btn{border:none;border-radius:16px;padding:16px;color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:inherit}
+  .action-btn:active{opacity:.85}
+
+  /* ── Project card ── */
+  .proj-card{background:var(--s0);border-radius:24px;box-shadow:0 4px 12px rgba(15,23,42,0.06);border:1px solid rgba(198,198,205,.35);padding:20px;margin-bottom:12px;cursor:pointer;transition:box-shadow .15s}
+  .proj-card:active{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+  .proj-name{font-weight:700;font-size:16px;color:var(--on-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .proj-loc{font-size:12px;color:var(--on-sv);margin-top:2px;display:flex;align-items:center;gap:2px}
+  .proj-loc .mdi{font-size:14px}
+  .proj-bar-track{background:var(--s-low);border-radius:99px;height:6px;overflow:hidden;margin:10px 0}
+  .proj-bar-fill{height:100%;border-radius:99px;transition:width .4s}
+
+  /* ── Filter bar ── */
+  .filter-bar{background:var(--s0);border-radius:16px;border:1px solid var(--outline);overflow:hidden;margin-bottom:12px}
+  .filter-trigger{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;user-select:none}
+  .filter-label{font-size:14px;color:var(--on-sv);font-weight:400}
+  .filter-label.active{color:#1565c0;font-weight:600}
+  .filter-badge{font-size:11px;background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:10px;font-weight:500;margin-left:6px}
+  .filter-body{display:none;border-top:1px solid var(--outline);padding:12px 14px 14px;background:var(--s-low)}
+  .filter-body.open{display:block}
+  .preset-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{padding:5px 12px;border-radius:999px;font-size:12px;cursor:pointer;border:1px solid var(--outline);background:#fff;color:var(--on-sv);font-family:inherit;font-weight:400}
+  .chip.active{background:#1565c0;color:#fff;border-color:#1565c0;font-weight:600}
+  .chip:active{opacity:.8}
+  .date-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+
+  /* ── Tags ── */
+  .tag-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 12px;font-size:12px;margin:3px}
+  .tag-row{display:flex;flex-wrap:wrap;margin:-3px}
+  .tag-list-item{background:var(--s0);border:1px solid var(--outline);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+
+  /* ── Transaction row ── */
+  .txn-row{background:var(--s0);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .txn-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .txn-icon .mdi{font-size:18px}
+  .txn-in{border-left:3px solid #a5d6a7}.txn-in .txn-icon{background:#e8f5e9;color:#2e7d32}
+  .txn-out{border-left:3px solid #ef9a9a}.txn-out .txn-icon{background:#ffebee;color:#c62828}
+  .txn-title{font-weight:600;font-size:14px;color:var(--on-s)}
+  .txn-meta{font-size:12px;color:var(--on-sv);margin-top:2px}
+  /* ── Reports page ── */
+  .report-sub{font-size:13px;color:var(--on-sv);margin:2px 4px 14px}
+  .report-card{background:var(--s0);border-radius:20px;border:1px solid rgba(198,198,205,.35);box-shadow:0 4px 12px rgba(15,23,42,.06);padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+  .report-card-label{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--on-sv);display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .report-card-value{font-size:24px;font-weight:700;color:var(--on-s)}
+  .report-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .report-icon .mdi{font-size:18px}
+  .report-trend{font-size:12px;font-weight:600;margin-top:8px;display:flex;align-items:center;gap:4px}
+  .report-trend .mdi{font-size:16px}
+  .report-deco{position:absolute;top:-24px;right:-24px;width:96px;height:96px;border-radius:50%;opacity:.45}
+  .spent-bar-track{height:6px;background:var(--s-mid);border-radius:999px;margin-top:12px;overflow:hidden}
+  .spent-bar-fill{height:100%;border-radius:999px;background:var(--err)}
+  .spent-bar-label{font-size:11px;color:var(--on-sv);margin-top:6px;text-align:right;font-weight:600}
+  .cashflow-wrap{position:relative;height:220px;margin-top:8px}
+  .cat-row{margin-bottom:14px}
+  .cat-row:last-child{margin-bottom:0}
+  .cat-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .cat-dot{width:22px;height:22px;border-radius:7px;flex-shrink:0}
+  .cat-name{font-size:14px;font-weight:600;color:var(--on-s)}
+  .cat-amt{margin-left:auto;font-size:14px;font-weight:700;color:var(--on-s)}
+  .cat-bar-track{height:6px;background:var(--s-mid);border-radius:999px;overflow:hidden}
+  .cat-bar-fill{height:100%;border-radius:999px}
+
+  /* ── Projects page ── */
+  .seg-tabs{display:flex;background:var(--s-mid);border-radius:12px;padding:4px;margin-bottom:16px}
+  .seg-tab{flex:1;padding:10px;border:none;background:none;border-radius:9px;font-family:inherit;font-size:14px;font-weight:700;color:var(--on-sv);cursor:pointer}
+  .seg-tab.active{background:var(--s0);color:var(--on-s);box-shadow:0 1px 3px rgba(15,23,42,.12)}
+  .pstat-label{font-size:11px;color:var(--on-sv);margin-bottom:2px}
+  .pstat-val{font-size:15px;font-weight:700}
+  .create-project-card{border:2px dashed var(--outline);border-radius:20px;padding:30px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;cursor:pointer;background:var(--s-low);margin-top:4px}
+  .create-project-circle{width:56px;height:56px;border-radius:50%;background:var(--pr);color:#fff;display:flex;align-items:center;justify-content:center}
+  .create-project-circle .mdi{font-size:30px}
+  .create-project-card .cp-text{font-weight:700;font-size:16px;color:var(--on-s)}
+
+  .date-group-header{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px;font-size:13px;font-weight:700;color:var(--on-s)}
+  .date-group-header:first-of-type{margin-top:4px}
+  .date-group-sub{font-weight:700;font-size:12px}
+  .txn-edit-btn{background:none;border:none;color:var(--on-sv);cursor:pointer;padding:2px;font-family:inherit;line-height:1}
+  .txn-amt-in{font-weight:700;font-size:15px;color:#2e7d32}
+  .txn-amt-out{font-weight:700;font-size:15px;color:#c62828}
+  .del-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:20px;line-height:1;padding:0 0 0 6px;font-family:inherit;display:flex;align-items:center}
+  .del-btn:active{color:#c62828}
+
+  /* ── Status badges ── */
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px}
+  .badge-active{background:#e3f2fd;color:#1565c0}
+  .badge-completed{background:#e8f5e9;color:#2e7d32}
+  .badge-onhold{background:#fff3e0;color:#e65100}
+
+  /* ── Dark summary strip ── */
+  .dark-strip{background:var(--inv-s);border-radius:24px;padding:18px 20px;margin-bottom:14px;color:#fff}
+  .dark-strip .stat-label{color:var(--inv-pr);opacity:.95}
+  .dark-strip .stat-value{color:#fff !important}
+  .dark-strip .stat{background:transparent !important}
+
+  /* ── Bottom sheet ── */
+  .sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:flex-end;justify-content:center}
+  .sheet-overlay.open{display:flex}
+  .sheet{background:var(--s0);border-radius:20px 20px 0 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px));width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+  .sheet-handle{width:40px;height:4px;background:var(--outline);border-radius:999px;margin:0 auto 20px}
+  .sheet-title{font-weight:700;font-size:18px;color:var(--on-s);margin-bottom:20px}
+
+  /* ── Empty state ── */
+  .empty{text-align:center;padding:60px 20px}
+  .empty-icon{font-size:52px;margin-bottom:16px}
+  .empty-title{font-weight:700;font-size:18px;color:var(--on-s);margin-bottom:8px}
+  .empty-sub{color:var(--on-sv);font-size:14px;margin-bottom:28px}
+
+  /* ── Toast ── */
+  #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--pr);color:#fff;padding:9px 22px;border-radius:999px;font-size:13px;font-family:inherit;z-index:999;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ── Install banner ── */
+  #install-banner{display:none;background:var(--inv-s);color:#fff;padding:12px 16px;align-items:center;justify-content:space-between;gap:10px;position:sticky;bottom:0;z-index:50}
+  #install-banner.show{display:flex}
+  #install-banner p{font-size:13px;line-height:1.4;flex:1}
+  #install-banner button{background:#fff;color:var(--on-s);border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit}
+
+  /* ── Chart container ── */
+  .chart-wrap{position:relative;height:200px;margin:4px 0}
+
+  /* ── Misc ── */
+  .row-sb{display:flex;align-items:center;justify-content:space-between}
+  .row{display:flex;align-items:center;gap:8px}
+  .muted{font-size:12px;color:var(--on-sv)}
+  .section-title{font-size:13px;color:var(--on-sv);font-weight:600;margin-bottom:8px}
+  .suggestion-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .sug-chip{background:#fff;border:1px solid var(--outline);border-radius:999px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--on-sv);font-family:inherit}
+  .sug-chip:active{background:var(--s-low)}
+  select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+
+  /* ── Settings ── */
+  .settings-cap{font-size:12px;font-weight:600;letter-spacing:.05em;color:var(--on-sv);text-transform:uppercase;margin:20px 4px 8px}
+  .settings-list{background:var(--s0);border-radius:24px;box-shadow:0 4px 12px rgba(15,23,42,0.06);border:1px solid rgba(198,198,205,.35);padding:0;overflow:hidden}
+  .settings-row{display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer;width:100%;background:none;border:none;font-family:inherit;font-size:16px;color:var(--on-s);text-align:left}
+  .settings-row:active{background:var(--s-low)}
+  .settings-row .mdi{color:var(--on-s)}
+  .settings-row .val{margin-left:auto;color:var(--on-sv);font-size:14px;display:flex;align-items:center;gap:6px}
+  .settings-divider{height:1px;background:var(--outline);opacity:.4}
+  .settings-row.danger,.settings-row.danger .mdi{color:var(--err)}
+
+  /* ── Transaction type toggle ── */
+  .txn-toggle{display:flex;gap:6px;background:var(--s-low);padding:5px;border-radius:12px;margin-bottom:16px}
+  .txn-toggle-btn{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit;background:transparent;color:var(--on-sv)}
+  .toggle-expense{background:var(--err-ctr);color:var(--err)}
+  .toggle-expense-inactive{background:transparent;color:var(--on-sv)}
+  .toggle-income-active{background:var(--sec);color:#fff}
+  .toggle-income-inactive{background:transparent;color:var(--on-sv)}
+
+  /* ── Amount hero ── */
+  .amount-hero{display:flex;flex-direction:column;align-items:center;padding:16px 0}
+  .amount-hero .lbl{margin-bottom:8px}
+  .amount-row{display:flex;align-items:center;gap:4px}
+  .amount-symbol{font-size:32px;font-weight:700;color:var(--on-sv)}
+  #txn-amount{font-size:32px;font-weight:700;text-align:center;border:none;background:transparent;outline:none;width:160px;color:var(--on-s);font-family:inherit;-moz-appearance:textfield;appearance:textfield}
+  #txn-amount::-webkit-outer-spin-button,#txn-amount::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .amount-underline{height:1px;width:75%;background:var(--outline);margin-top:8px}
+
+  /* ── Fixed bottom bar ── */
+  .fixed-bottom-bar{position:fixed;bottom:0;width:100%;max-width:480px;left:50%;transform:translateX(-50%);background:var(--s0);border-top:1px solid var(--outline);padding:16px;z-index:50;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+
+  /* ── Bottom nav ── */
+  .bottom-nav{position:fixed;bottom:0;width:100%;max-width:480px;left:50%;transform:translateX(-50%);background:var(--s0);border-top:1px solid var(--outline);border-radius:16px 16px 0 0;height:64px;display:flex;justify-content:space-around;align-items:center;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
+  .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;color:var(--on-sv);opacity:.7;font-size:11px;font-weight:500;padding:4px 12px;border-radius:999px;font-family:inherit}
+  .nav-btn.active{opacity:1;color:#000;background:var(--sec-ctr)}
+  .nav-btn.active .mdi{font-variation-settings:'FILL' 1}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══════════════════════ SCREEN: HOME ══════════════════════ -->
+  <div class="screen active" id="screen-home">
+    <header class="hdr">
+      <div class="row">
+        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
+      </div>
+      <div class="hdr-actions">
+        <button class="globe-btn" onclick="toggleLang()"><span class="mdi">language</span></button>
+        <button class="icon-btn"><span class="mdi">notifications</span></button>
+      </div>
+    </header>
+    <div class="content" id="home-content"></div>
+    <div id="install-banner">
+      <p data-i18n="install_banner_text">📲 Add to your home screen for the full app experience</p>
+      <button onclick="installApp()" data-i18n="install_btn">Install</button>
+    </div>
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="backToHome()"><span class="mdi">dashboard</span><span data-i18n="nav_dashboard">Dashboard</span></button>
+      <button class="nav-btn" onclick="openProjects()"><span class="mdi">account_tree</span><span data-i18n="nav_projects">Projects</span></button>
+      <button class="nav-btn" onclick="openReports()"><span class="mdi">bar_chart</span><span data-i18n="nav_reports">Reports</span></button>
+      <button class="nav-btn" onclick="openSettings()"><span class="mdi">settings</span><span data-i18n="nav_settings">Settings</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: PROJECTS ══════════════════════ -->
+  <div class="screen" id="screen-projects">
+    <header class="hdr">
+      <div class="row">
+        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
+      </div>
+      <div class="hdr-actions">
+        <button class="globe-btn" onclick="toggleLang()"><span class="mdi">language</span></button>
+        <button class="icon-btn"><span class="mdi">notifications</span></button>
+      </div>
+    </header>
+    <div class="content">
+      <h2 style="font-size:28px;font-weight:700;margin:8px 4px 14px" data-i18n="projects_heading">Projects</h2>
+      <div class="seg-tabs">
+        <button class="seg-tab active" id="ptab-active" onclick="setProjectsTab('active')" data-i18n="projects_tab_active">Active</button>
+        <button class="seg-tab" id="ptab-completed" onclick="setProjectsTab('completed')" data-i18n="projects_tab_completed">Completed</button>
+      </div>
+      <div id="projects-list"></div>
+    </div>
+    <nav class="bottom-nav">
+      <button class="nav-btn" onclick="backToHome()"><span class="mdi">dashboard</span><span data-i18n="nav_dashboard">Dashboard</span></button>
+      <button class="nav-btn active" onclick="openProjects()"><span class="mdi">account_tree</span><span data-i18n="nav_projects">Projects</span></button>
+      <button class="nav-btn" onclick="openReports()"><span class="mdi">bar_chart</span><span data-i18n="nav_reports">Reports</span></button>
+      <button class="nav-btn" onclick="openSettings()"><span class="mdi">settings</span><span data-i18n="nav_settings">Settings</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: REPORTS ══════════════════════ -->
+  <div class="screen" id="screen-reports">
+    <header class="hdr">
+      <div class="row">
+        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
+      </div>
+      <div class="hdr-actions">
+        <button class="globe-btn" onclick="toggleLang()"><span class="mdi">language</span></button>
+        <button class="icon-btn"><span class="mdi">notifications</span></button>
+      </div>
+    </header>
+    <div class="content">
+      <h2 style="font-size:28px;font-weight:700;margin:8px 4px 2px" data-i18n="reports_heading">Financial Reports</h2>
+      <p class="report-sub" id="report-subtitle"></p>
+      <div class="seg-tabs">
+        <button class="seg-tab active" id="rtab-month" onclick="setReportPeriod('month')" data-i18n="period_month">Month</button>
+        <button class="seg-tab" id="rtab-quarter" onclick="setReportPeriod('quarter')" data-i18n="period_quarter">Quarter</button>
+        <button class="seg-tab" id="rtab-year" onclick="setReportPeriod('year')" data-i18n="period_year">Year</button>
+      </div>
+      <div id="reports-content"></div>
+    </div>
+    <nav class="bottom-nav">
+      <button class="nav-btn" onclick="backToHome()"><span class="mdi">dashboard</span><span data-i18n="nav_dashboard">Dashboard</span></button>
+      <button class="nav-btn" onclick="openProjects()"><span class="mdi">account_tree</span><span data-i18n="nav_projects">Projects</span></button>
+      <button class="nav-btn active" onclick="openReports()"><span class="mdi">bar_chart</span><span data-i18n="nav_reports">Reports</span></button>
+      <button class="nav-btn" onclick="openSettings()"><span class="mdi">settings</span><span data-i18n="nav_settings">Settings</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: SETTINGS ══════════════════════ -->
+  <div class="screen" id="screen-settings">
+    <header class="hdr">
+      <div class="row">
+        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
+      </div>
+      <div class="hdr-actions">
+        <button class="globe-btn" onclick="toggleLang()"><span class="mdi">language</span></button>
+        <button class="icon-btn"><span class="mdi">notifications</span></button>
+      </div>
+    </header>
+    <div class="content">
+      <h2 style="font-size:28px;font-weight:700;margin:8px 4px 4px" data-i18n="settings_title">Settings</h2>
+      <p class="settings-cap" data-i18n="pref_section">APP PREFERENCES</p>
+      <div class="settings-list card">
+        <button class="settings-row" onclick="toggleLang()">
+          <span class="mdi">language</span>
+          <span data-i18n="language_label">Language</span>
+          <span class="val"><span data-i18n="lang_name">English</span><span class="mdi">chevron_right</span></span>
+        </button>
+      </div>
+      <p class="settings-cap" data-i18n="data_section">DATA MANAGEMENT</p>
+      <div class="settings-list card">
+        <button class="settings-row" onclick="exportAll()">
+          <span class="mdi">file_download</span>
+          <span data-i18n="export_data">Export Data</span>
+          <span class="val"><span class="mdi">chevron_right</span></span>
+        </button>
+        <div class="settings-divider"></div>
+        <button class="settings-row" onclick="document.getElementById('importFile').click()">
+          <span class="mdi">file_upload</span>
+          <span data-i18n="import_data">Import Data</span>
+          <span class="val"><span class="mdi">chevron_right</span></span>
+        </button>
+        <div class="settings-divider"></div>
+        <button class="settings-row danger" onclick="clearAllData()">
+          <span class="mdi">delete_forever</span>
+          <span data-i18n="clear_data_btn">Clear All Data</span>
+          <span class="val"><span class="mdi">chevron_right</span></span>
+        </button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAll(event)"/>
+    </div>
+    <nav class="bottom-nav">
+      <button class="nav-btn" onclick="backToHome()"><span class="mdi">dashboard</span><span data-i18n="nav_dashboard">Dashboard</span></button>
+      <button class="nav-btn" onclick="openProjects()"><span class="mdi">account_tree</span><span data-i18n="nav_projects">Projects</span></button>
+      <button class="nav-btn" onclick="openReports()"><span class="mdi">bar_chart</span><span data-i18n="nav_reports">Reports</span></button>
+      <button class="nav-btn active" onclick="openSettings()"><span class="mdi">settings</span><span data-i18n="nav_settings">Settings</span></button>
+    </nav>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: PROJECT DASHBOARD ══════════════════════ -->
+  <div class="screen" id="screen-project">
+    <header class="hdr">
+      <div class="row">
+        <button class="back-btn" onclick="backToHome()"><span class="mdi">chevron_left</span></button>
+        <div>
+          <div class="hdr-title" id="proj-hdr-name"></div>
+          <div class="hdr-sub" id="proj-hdr-sub"></div>
+        </div>
+      </div>
+      <div class="hdr-actions" style="position:relative">
+        <button class="icon-btn" onclick="toggleProjMenu(event)"><span class="mdi" style="font-size:22px">more_vert</span></button>
+        <div id="proj-menu" class="popover">
+          <button class="popover-item" onclick="hideProjMenu();document.getElementById('importFileP').click()"><span class="mdi">file_upload</span><span data-i18n="import_label">Import</span></button>
+          <button class="popover-item" onclick="hideProjMenu();exportAll()"><span class="mdi">file_download</span><span data-i18n="export_label">Export</span></button>
+          <button class="popover-item" onclick="hideProjMenu();showSubScreen('history')"><span class="mdi">receipt_long</span><span data-i18n="history_title">History</span></button>
+        </div>
+        <input type="file" id="importFileP" accept=".json" style="display:none" onchange="importAll(event)"/>
+      </div>
+    </header>
+    <div class="content" id="proj-content"></div>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: ADD TRANSACTION (unified) ══════════════════════ -->
+  <div class="screen" id="screen-addTxn">
+    <header class="hdr">
+      <div class="row">
+        <button class="back-btn" onclick="showSubScreen('dash')"><span class="mdi">chevron_left</span></button>
+        <div class="hdr-title" data-i18n="add_txn_title">New Transaction</div>
+      </div>
+    </header>
+    <div class="content">
+      <div class="txn-toggle">
+        <button class="txn-toggle-btn toggle-income-inactive" id="btn-income" onclick="setTxnType('in')" data-i18n="txn_type_income">Money In</button>
+        <button class="txn-toggle-btn toggle-expense" id="btn-expense" onclick="setTxnType('out')" data-i18n="txn_type_expense">Expense</button>
+      </div>
+      <div class="card">
+        <div class="amount-hero">
+          <label class="lbl" id="txn-amount-label" for="txn-amount">Amount Spent</label>
+          <div class="amount-row"><span class="amount-symbol">₹</span><input type="number" id="txn-amount" inputmode="numeric" placeholder="0"/></div>
+          <div class="amount-underline"></div>
+        </div>
+        <div id="tag-field-wrap" style="display:flex;flex-direction:column">
+          <label class="lbl" data-i18n="tag_lbl" for="txn-tag">Tag</label>
+          <select id="txn-tag" class="inp"><option value="" data-i18n="select_tag_opt">— Select tag —</option></select>
+        </div>
+        <div id="method-field-wrap" style="display:none;flex-direction:column">
+          <label class="lbl" data-i18n="payment_method_lbl" for="txn-method">Payment method</label>
+          <select id="txn-method" class="inp">
+            <option value="cash" data-i18n="method_cash">Cash</option>
+            <option value="online" data-i18n="method_online">Online</option>
+          </select>
+        </div>
+        <label class="lbl" data-i18n="date_lbl" for="txn-date">Date</label>
+        <input type="date" id="txn-date" class="inp"/>
+        <label class="lbl" data-i18n="note_optional_lbl" for="txn-note">Note (optional)</label>
+        <input type="text" id="txn-note" class="inp" data-i18n-ph="ph_expense_note" placeholder="e.g. Cement 50 bags"/>
+        <p id="no-tag-hint" data-has-no-tags="0" style="text-align:center;margin-top:12px;font-size:13px;color:var(--on-sv);display:none">
+          <span data-i18n="no_tags_hint">No tags yet — </span><button onclick="showSubScreen('tags')" style="background:none;border:none;color:#1565c0;cursor:pointer;font-size:13px;font-family:inherit" data-i18n="create_one">create one</button>
+        </p>
+      </div>
+    </div>
+    <div class="fixed-bottom-bar">
+      <button class="btn btn-red" id="txn-action-btn" style="display:flex;align-items:center;justify-content:center;gap:8px" onclick="addTransaction()"><span class="mdi">remove</span><span>Add Expense</span></button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: TAGS ══════════════════════ -->
+  <div class="screen" id="screen-tags">
+    <header class="hdr">
+      <div class="row">
+        <button class="back-btn" onclick="showSubScreen('dash')"><span class="mdi">chevron_left</span></button>
+        <div class="hdr-title" data-i18n="manage_tags_title">Manage tags</div>
+      </div>
+    </header>
+    <div class="content" id="tags-content"></div>
+  </div>
+
+  <!-- ══════════════════════ SCREEN: HISTORY ══════════════════════ -->
+  <div class="screen" id="screen-history">
+    <header class="hdr">
+      <div class="row">
+        <button class="back-btn" onclick="showSubScreen('dash')"><span class="mdi">chevron_left</span></button>
+        <div class="hdr-title" data-i18n="history_title">History</div>
+      </div>
+    </header>
+    <div class="content" id="history-content"></div>
+  </div>
+
+  <!-- ══════════════════════ SHEET: CREATE PROJECT ══════════════════════ -->
+  <div id="sheet-create" class="sheet-overlay" onclick="closeSheet(event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="row-sb" style="margin-bottom:20px">
+        <div class="sheet-title" style="margin-bottom:0" data-i18n="new_project_title">New project</div>
+        <button onclick="closeCreateSheet()" style="background:none;border:none;cursor:pointer;color:#888;font-family:inherit;display:flex"><span class="mdi">close</span></button>
+      </div>
+      <label class="lbl" style="margin-top:0" data-i18n="proj_name_lbl">Project name *</label>
+      <input type="text" id="new-proj-name" class="inp" data-i18n-ph="ph_proj_name" placeholder="e.g. Sharma Residence"/>
+      <label class="lbl" data-i18n="location_lbl">Location</label>
+      <input type="text" id="new-proj-loc" class="inp" data-i18n-ph="ph_proj_loc" placeholder="e.g. Pune, Maharashtra"/>
+      <label class="lbl" data-i18n="budget_lbl">Total budget (₹, optional)</label>
+      <input type="number" id="new-proj-budget" class="inp" data-i18n-ph="ph_proj_budget" placeholder="e.g. 2500000" inputmode="numeric"/>
+      <label class="lbl" data-i18n="status_lbl">Status</label>
+      <div class="grid3" style="margin-bottom:22px;margin-top:5px" id="status-picker">
+        <button class="chip active" data-status="active"    onclick="pickStatus(this)" data-i18n="status_active">Active</button>
+        <button class="chip"        data-status="onhold"    onclick="pickStatus(this)" data-i18n="status_onhold">On Hold</button>
+        <button class="chip"        data-status="completed" onclick="pickStatus(this)" data-i18n="status_completed">Completed</button>
+      </div>
+      <button class="btn btn-dark" id="create-btn" onclick="createProject()" data-i18n="create_project_btn">Create project</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SHEET: EDIT PROJECT ══════════════════════ -->
+  <div id="sheet-edit" class="sheet-overlay" onclick="closeEditSheet(event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="row-sb" style="margin-bottom:20px">
+        <div class="sheet-title" style="margin-bottom:0" data-i18n="edit_project_title">Edit project</div>
+        <button onclick="closeEditSheet()" style="background:none;border:none;cursor:pointer;color:#888;font-family:inherit;display:flex"><span class="mdi">close</span></button>
+      </div>
+      <label class="lbl" style="margin-top:0" data-i18n="proj_name_lbl">Project name *</label>
+      <input type="text" id="edit-proj-name" class="inp" data-i18n-ph="ph_proj_name" placeholder="e.g. Sharma Residence"/>
+      <label class="lbl" data-i18n="location_lbl">Location</label>
+      <input type="text" id="edit-proj-loc" class="inp" data-i18n-ph="ph_proj_loc" placeholder="e.g. Pune, Maharashtra"/>
+      <label class="lbl" data-i18n="budget_lbl">Total budget (₹, optional)</label>
+      <input type="number" id="edit-proj-budget" class="inp" data-i18n-ph="ph_proj_budget" placeholder="e.g. 2500000" inputmode="numeric"/>
+      <label class="lbl" data-i18n="status_lbl">Status</label>
+      <div class="grid3" style="margin-bottom:22px;margin-top:5px" id="edit-status-picker">
+        <button class="chip active" data-status="active"    onclick="pickEditStatus(this)" data-i18n="status_active">Active</button>
+        <button class="chip"        data-status="onhold"    onclick="pickEditStatus(this)" data-i18n="status_onhold">On Hold</button>
+        <button class="chip"        data-status="completed" onclick="pickEditStatus(this)" data-i18n="status_completed">Completed</button>
+      </div>
+      <button class="btn btn-dark" onclick="saveEditProject()" data-i18n="save_changes_btn">Save changes</button>
+      <button onclick="deleteProjectFromEdit()" style="width:100%;background:none;border:none;color:var(--err);font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;padding:8px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px"><span class="mdi" style="font-size:18px">delete</span><span data-i18n="delete_project_btn">Delete project</span></button>
+      <button onclick="closeEditSheet()" style="width:100%;background:none;border:none;color:#888;font-size:14px;cursor:pointer;margin-top:4px;padding:8px;font-family:inherit" data-i18n="cancel_btn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════ SHEET: EDIT TRANSACTION ══════════════════════ -->
+  <div id="sheet-edit-txn" class="sheet-overlay" onclick="closeTxnSheet(event)">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="row-sb" style="margin-bottom:4px">
+        <div class="sheet-title" style="margin-bottom:0" id="txn-sheet-title">Edit transaction</div>
+        <button onclick="closeTxnSheet()" style="background:none;border:none;cursor:pointer;color:#888;font-family:inherit;display:flex"><span class="mdi">close</span></button>
+      </div>
+      <p id="txn-sheet-subtitle" style="font-size:12px;color:#888;margin-bottom:18px"></p>
+      <label class="lbl" style="margin-top:0" data-i18n="amount_lbl">Amount (Rs.) *</label>
+      <input type="number" id="txn-edit-amount" class="inp inp-big" inputmode="numeric"/>
+      <div id="txn-edit-tag-wrap">
+        <label class="lbl" data-i18n="tag_lbl">Tag</label>
+        <select id="txn-edit-tag" class="inp"></select>
+      </div>
+      <label class="lbl" data-i18n="date_lbl">Date</label>
+      <input type="date" id="txn-edit-date" class="inp"/>
+      <label class="lbl" data-i18n="note_lbl">Note</label>
+      <input type="text" id="txn-edit-note" class="inp" data-i18n-ph="ph_optional_note" placeholder="Optional note"/>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button id="txn-save-btn" class="btn" style="flex:1" onclick="saveTxnEdit()" data-i18n="save_changes_btn">Save changes</button>
+        <button onclick="closeTxnSheet()" style="flex:0 0 90px;background:#f0f0f0;border:1px solid #ddd;border-radius:12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;color:#555" data-i18n="cancel_btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+</div>
+
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  I18N — TRANSLATIONS
+// ═══════════════════════════════════════════════════════
+const i18n = {
+  en: {
+    app_title:"Expense Tracker",
+    hdr_title:"Expense Tracker",
+    lang_toggle:"தமிழ்",
+    export_btn:"Export",
+    import_btn:"Import",
+    edit_btn:"✏️ Edit",
+    tags_btn:"Tags",
+    add_income_title:"Add money received",
+    amount_received_lbl:"Amount received (₹)",
+    date_lbl:"Date",
+    note_optional_lbl:"Note (optional)",
+    ph_amount_50k:"e.g. 50000",
+    ph_income_note:"e.g. 2nd payment from owner",
+    add_income_btn:"Add received amount",
+    add_expense_title:"Add expense",
+    amount_spent_lbl:"Amount spent (₹)",
+    tag_lbl:"Tag",
+    select_tag_opt:"— Select tag —",
+    ph_amount_8k:"e.g. 8000",
+    ph_expense_note:"e.g. Cement 50 bags",
+    add_expense_btn:"Add expense",
+    no_tags_hint:"No tags yet — ",
+    create_one:"create one",
+    manage_tags_title:"Manage tags",
+    history_title:"History",
+    new_project_title:"New project",
+    proj_name_lbl:"Project name *",
+    location_lbl:"Location",
+    budget_lbl:"Total budget (₹, optional)",
+    status_lbl:"Status",
+    status_active:"Active",
+    status_onhold:"On Hold",
+    status_completed:"Completed",
+    create_project_btn:"Create project",
+    ph_proj_name:"e.g. Sharma Residence",
+    ph_proj_loc:"e.g. Pune, Maharashtra",
+    ph_proj_budget:"e.g. 2500000",
+    edit_project_title:"Edit project",
+    save_changes_btn:"Save changes",
+    cancel_btn:"Cancel",
+    amount_lbl:"Amount (₹) *",
+    note_lbl:"Note",
+    ph_optional_note:"Optional note",
+    no_tag_opt:"— No tag —",
+    install_banner_text:"📲 Add to your home screen for the full app experience",
+    install_btn:"Install",
+    no_projects_title:"No projects yet",
+    no_projects_sub:"Create your first project to start tracking expenses.",
+    create_project_cta:"+ Create project",
+    new_project_btn:"New Project",
+    overall_label:"Overall",
+    project_singular:"project",
+    project_plural:"projects",
+    received_lbl:"Received",
+    spent_lbl:"Spent",
+    balance_lbl:"Balance",
+    badge_active:"Active",
+    badge_onhold:"On Hold",
+    badge_completed:"Completed",
+    construction_project:"Construction project",
+    money_in_btn:"Money In",
+    money_out_btn:"Money Out",
+    payment_method_lbl:"Payment method",
+    method_cash:"Cash",
+    method_online:"Online",
+    expenses_by_tag:"Expense chart",
+    no_expenses_period:"No expenses in this period",
+    add_expenses_hint:"Add expenses to see tag breakdown",
+    tags_section:"Tags",
+    filter_all_time:"All time",
+    filter_today:"Today",
+    yesterday_label:"Yesterday",
+    filter_this_week:"This week",
+    filter_this_month:"This month",
+    filter_this_year:"This year",
+    filter_active_badge:"Active",
+    filter_clear:"× Clear",
+    quick_select:"Quick select",
+    custom_range:"Custom range",
+    from_lbl:"From",
+    to_lbl:"To",
+    apply_custom_range:"Apply custom range",
+    no_tags_yet:"No tags yet.",
+    create_tag_lbl:"Create a new tag",
+    tag_inp_ph:"e.g. Cement, Labour, Steel…",
+    add_tag_btn:"Add",
+    entry_singular:"entry",
+    entry_plural:"entries",
+    untagged:"Untagged",
+    transaction_singular:"transaction",
+    transaction_plural:"transactions",
+    no_txn_period:"No transactions in this period",
+    no_txn_yet:"No transactions yet.",
+    money_received_default:"Money received",
+    expense_default:"Expense",
+    edit_income_title:"Edit money received",
+    edit_expense_title:"Edit expense",
+    money_in_txn_subtitle:"Money In transaction",
+    money_out_txn_subtitle:"Money Out transaction",
+    toast_valid_amount:"Enter a valid amount",
+    toast_income_added:"Amount received added ✓",
+    toast_expense_added:"Expense added ✓",
+    toast_tag_exists:"Tag already exists",
+    toast_tag_created:"Tag created ✓",
+    toast_tag_removed:"Tag removed",
+    toast_deleted:"Deleted",
+    toast_enter_proj_name:"Enter a project name",
+    toast_proj_name_required:"Project name is required",
+    toast_proj_created:"Project created ✓",
+    toast_proj_updated:"Project updated ✓",
+    toast_proj_deleted:"Project deleted",
+    confirm_delete_project:"Delete this project and all its data?",
+    delete_project_btn:"Delete project",
+    toast_txn_updated:"Transaction updated ✓",
+    toast_exported:"Exported ✓",
+    toast_imported:"Imported ✓",
+    toast_invalid_file:"Invalid file format",
+    toast_cannot_read:"Could not read file",
+    toast_app_installed:"App installed ✓",
+    sug_cement:"Cement",sug_labour:"Labour",sug_steel:"Steel",sug_sand:"Sand",
+    sug_bricks:"Bricks",sug_plumbing:"Plumbing",sug_electrical:"Electrical",
+    sug_tiles:"Tiles",sug_paint:"Paint",sug_woodwork:"Woodwork",
+    sug_foundation:"Foundation",sug_roofing:"Roofing",
+    nav_dashboard:"Dashboard", nav_projects:"Projects", nav_reports:"Reports", nav_settings:"Settings",
+    projects_heading:"Projects", projects_tab_active:"Active", projects_tab_completed:"Completed",
+    budget_consumed:"Budget Consumed", create_new_project:"Create New Project", no_projects_in_tab:"No projects here yet",
+    reports_heading:"Financial Reports", reports_analytics_for:"Analytics for",
+    period_month:"Month", period_quarter:"Quarter", period_year:"Year",
+    net_balance:"Net Balance", total_received:"Total Received", total_spent:"Total Spent",
+    cash_flow:"Cash Flow", top_categories:"Top Categories",
+    vs_last:"vs last", word_month:"month", word_quarter:"quarter", word_year:"year",
+    of_budget:"of Budget", of_received:"of received", others_cat:"Others", reports_no_data:"No data for this period",
+    settings_title:"Settings", pref_section:"APP PREFERENCES", data_section:"DATA MANAGEMENT",
+    language_label:"Language", lang_name:"English",
+    export_data:"Export Data", import_data:"Import Data", clear_data_btn:"Clear All Data",
+    confirm_clear_all:"Clear all data? This cannot be undone.", toast_cleared:"All data cleared",
+    quick_actions:"Quick Actions", add_txn_title:"New Transaction",
+    txn_type_expense:"Expense", txn_type_income:"Money In", toast_coming_soon:"Coming soon",
+    import_label:"Import", export_label:"Export"
+  },
+  ta: {
+    app_title:"செலவு கணக்கு",
+    hdr_title:"செலவு கணக்கு",
+    lang_toggle:"English",
+    export_btn:"ஏற்றுமதி",
+    import_btn:"இறக்குமதி",
+    edit_btn:"✏️ திருத்து",
+    tags_btn:"குறிகள்",
+    add_income_title:"பணம் பெற்றது சேர்க்க",
+    amount_received_lbl:"பெற்ற தொகை (₹)",
+    date_lbl:"தேதி",
+    note_optional_lbl:"குறிப்பு (விருப்பமானது)",
+    ph_amount_50k:"எ.கா. 50000",
+    ph_income_note:"எ.கா. உரிமையாளரிடம் 2வது கட்டணம்",
+    add_income_btn:"பெற்ற தொகையை சேர்க்கவும்",
+    add_expense_title:"செலவு சேர்க்க",
+    amount_spent_lbl:"செலவு தொகை (₹)",
+    tag_lbl:"குறிச்சொல்",
+    select_tag_opt:"— குறிச்சொல் தேர்ந்தெடுக்கவும் —",
+    ph_amount_8k:"எ.கா. 8000",
+    ph_expense_note:"எ.கா. சிமெண்ட் 50 பைகள்",
+    add_expense_btn:"செலவு சேர்க்கவும்",
+    no_tags_hint:"குறிச்சொல்கள் இல்லை — ",
+    create_one:"ஒன்று உருவாக்கவும்",
+    manage_tags_title:"குறிச்சொல்களை நிர்வகி",
+    history_title:"வரலாறு",
+    new_project_title:"புதிய திட்டம்",
+    proj_name_lbl:"திட்டத்தின் பெயர் *",
+    location_lbl:"இடம்",
+    budget_lbl:"மொத்த பட்ஜெட் (₹, விருப்பமானது)",
+    status_lbl:"நிலை",
+    status_active:"செயல்பாட்டில்",
+    status_onhold:"நிறுத்தி வைக்கப்பட்டது",
+    status_completed:"முடிந்தது",
+    create_project_btn:"திட்டம் உருவாக்கவும்",
+    ph_proj_name:"எ.கா. சர்மா இல்லம்",
+    ph_proj_loc:"எ.கா. புனே, மகாராஷ்டிரா",
+    ph_proj_budget:"எ.கா. 2500000",
+    edit_project_title:"திட்டத்தை திருத்து",
+    save_changes_btn:"மாற்றங்களை சேமி",
+    cancel_btn:"ரத்து செய்",
+    amount_lbl:"தொகை (₹) *",
+    note_lbl:"குறிப்பு",
+    ph_optional_note:"விருப்பமான குறிப்பு",
+    no_tag_opt:"— குறிச்சொல் இல்லை —",
+    install_banner_text:"📲 முழு அனுபவத்திற்கு முகப்புத் திரையில் சேர்க்கவும்",
+    install_btn:"நிறுவு",
+    no_projects_title:"திட்டங்கள் இல்லை",
+    no_projects_sub:"செலவுகளை கண்காணிக்க உங்கள் முதல் திட்டத்தை உருவாக்கவும்.",
+    create_project_cta:"+ திட்டம் உருவாக்கவும்",
+    new_project_btn:"புதிய திட்டம்",
+    overall_label:"மொத்தம்",
+    project_singular:"திட்டம்",
+    project_plural:"திட்டங்கள்",
+    received_lbl:"பெற்றது",
+    spent_lbl:"செலவிட்டது",
+    balance_lbl:"இருப்பு",
+    badge_active:"செயல்பாட்டில்",
+    badge_onhold:"நிறுத்தி வைக்கப்பட்டது",
+    badge_completed:"முடிந்தது",
+    construction_project:"கட்டுமான திட்டம்",
+    money_in_btn:"பணம் வந்தது",
+    money_out_btn:"பணம் சென்றது",
+    payment_method_lbl:"பணம் செலுத்தும் முறை",
+    method_cash:"பணம்",
+    method_online:"ஆன்லைன்",
+    expenses_by_tag:"செலவு விளக்கப்படம்",
+    no_expenses_period:"இந்த காலகட்டத்தில் செலவுகள் இல்லை",
+    add_expenses_hint:"குறிச்சொல் விவரம் காண செலவுகள் சேர்க்கவும்",
+    tags_section:"குறிச்சொல்கள்",
+    filter_all_time:"எல்லா நேரமும்",
+    filter_today:"இன்று",
+    yesterday_label:"நேற்று",
+    filter_this_week:"இந்த வாரம்",
+    filter_this_month:"இந்த மாதம்",
+    filter_this_year:"இந்த ஆண்டு",
+    filter_active_badge:"செயலில்",
+    filter_clear:"× அழி",
+    quick_select:"விரைவு தேர்வு",
+    custom_range:"தனிப்பயன் வரம்பு",
+    from_lbl:"இருந்து",
+    to_lbl:"வரை",
+    apply_custom_range:"தனிப்பயன் வரம்பு பயன்படுத்து",
+    no_tags_yet:"குறிச்சொல்கள் இல்லை.",
+    create_tag_lbl:"புதிய குறிச்சொல் உருவாக்கவும்",
+    tag_inp_ph:"எ.கா. சிமெண்ட், தொழிலாளர், எஃகு…",
+    add_tag_btn:"சேர்",
+    entry_singular:"பதிவு",
+    entry_plural:"பதிவுகள்",
+    untagged:"குறிச்சொல் இல்லாதது",
+    transaction_singular:"பரிவர்த்தனை",
+    transaction_plural:"பரிவர்த்தனைகள்",
+    no_txn_period:"இந்த காலகட்டத்தில் பரிவர்த்தனைகள் இல்லை",
+    no_txn_yet:"பரிவர்த்தனைகள் இல்லை.",
+    money_received_default:"பணம் பெற்றது",
+    expense_default:"செலவு",
+    edit_income_title:"பெற்ற பணத்தை திருத்து",
+    edit_expense_title:"செலவை திருத்து",
+    money_in_txn_subtitle:"பணம் வந்த பரிவர்த்தனை",
+    money_out_txn_subtitle:"பணம் சென்ற பரிவர்த்தனை",
+    toast_valid_amount:"சரியான தொகையை உள்ளிடவும்",
+    toast_income_added:"பெற்ற தொகை சேர்க்கப்பட்டது ✓",
+    toast_expense_added:"செலவு சேர்க்கப்பட்டது ✓",
+    toast_tag_exists:"குறிச்சொல் ஏற்கனவே உள்ளது",
+    toast_tag_created:"குறிச்சொல் உருவாக்கப்பட்டது ✓",
+    toast_tag_removed:"குறிச்சொல் நீக்கப்பட்டது",
+    toast_deleted:"நீக்கப்பட்டது",
+    toast_enter_proj_name:"திட்டத்தின் பெயரை உள்ளிடவும்",
+    toast_proj_name_required:"திட்டத்தின் பெயர் தேவை",
+    toast_proj_created:"திட்டம் உருவாக்கப்பட்டது ✓",
+    toast_proj_updated:"திட்டம் புதுப்பிக்கப்பட்டது ✓",
+    toast_proj_deleted:"திட்டம் நீக்கப்பட்டது",
+    confirm_delete_project:"இந்த திட்டத்தையும் அதன் அனைத்து தரவையும் நீக்கவா?",
+    delete_project_btn:"திட்டத்தை நீக்கு",
+    toast_txn_updated:"பரிவர்த்தனை புதுப்பிக்கப்பட்டது ✓",
+    toast_exported:"ஏற்றுமதி செய்யப்பட்டது ✓",
+    toast_imported:"இறக்குமதி செய்யப்பட்டது ✓",
+    toast_invalid_file:"தவறான கோப்பு வடிவம்",
+    toast_cannot_read:"கோப்பை படிக்க முடியவில்லை",
+    toast_app_installed:"செயலி நிறுவப்பட்டது ✓",
+    sug_cement:"சிமெண்ட்",sug_labour:"தொழிலாளர்",sug_steel:"எஃகு",sug_sand:"மணல்",
+    sug_bricks:"செங்கல்",sug_plumbing:"குழாய் வேலை",sug_electrical:"மின் வேலை",
+    sug_tiles:"டைல்ஸ்",sug_paint:"சாயம்",sug_woodwork:"மரவேலை",
+    sug_foundation:"அடித்தளம்",sug_roofing:"கூரை வேலை",
+    nav_dashboard:"முகப்பு", nav_projects:"திட்டங்கள்", nav_reports:"அறிக்கைகள்", nav_settings:"அமைப்புகள்",
+    projects_heading:"திட்டங்கள்", projects_tab_active:"செயலில்", projects_tab_completed:"முடிந்தது",
+    budget_consumed:"பட்ஜெட் பயன்பாடு", create_new_project:"புதிய திட்டம் உருவாக்கு", no_projects_in_tab:"இங்கு திட்டங்கள் இல்லை",
+    reports_heading:"நிதி அறிக்கைகள்", reports_analytics_for:"பகுப்பாய்வு —",
+    period_month:"மாதம்", period_quarter:"காலாண்டு", period_year:"ஆண்டு",
+    net_balance:"நிகர இருப்பு", total_received:"மொத்தம் பெற்றது", total_spent:"மொத்தம் செலவு",
+    cash_flow:"பண ஓட்டம்", top_categories:"முக்கிய வகைகள்",
+    vs_last:"கடந்த", word_month:"மாதம்", word_quarter:"காலாண்டு", word_year:"ஆண்டு",
+    of_budget:"பட்ஜெட்டில்", of_received:"பெற்றதில்", others_cat:"மற்றவை", reports_no_data:"இந்த காலத்திற்கு தரவு இல்லை",
+    settings_title:"அமைப்புகள்", pref_section:"செயலி விருப்பங்கள்", data_section:"தரவு மேலாண்மை",
+    language_label:"மொழி", lang_name:"தமிழ்",
+    export_data:"தரவை ஏற்றுமதி செய்", import_data:"தரவை இறக்குமதி செய்", clear_data_btn:"அனைத்து தரவையும் அழி",
+    confirm_clear_all:"அனைத்து தரவையும் அழிக்கவா? இதை மீட்டெடுக்க முடியாது.", toast_cleared:"அனைத்து தரவும் அழிக்கப்பட்டது",
+    quick_actions:"விரைவு செயல்கள்", add_txn_title:"புதிய பரிவர்த்தனை",
+    txn_type_expense:"செலவு", txn_type_income:"பணம் வந்தது", toast_coming_soon:"விரைவில் வரும்",
+    import_label:"இறக்குமதி", export_label:"ஏற்றுமதி"
+  }
+};
+
+let lang = localStorage.getItem("et_lang") || "en";
+
+function t(key) {
+  return (i18n[lang] && i18n[lang][key] !== undefined ? i18n[lang][key] : (i18n.en[key] || key));
+}
+
+function icon(name, size) { return `<span class="mdi"${size?` style="font-size:${size}px"`:``}>${name}</span>`; }
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = t("app_title");
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const val = t(el.dataset.i18n);
+    el.textContent = val;
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+}
+
+function setLang(l) {
+  lang = l;
+  localStorage.setItem("et_lang", l);
+  applyLang();
+  const active = document.querySelector(".screen.active");
+  const id = active ? active.id : "";
+  if (id === "screen-home") {
+    renderHome();
+  } else if (id === "screen-project") {
+    if (currentProjectId) {
+      document.getElementById("proj-hdr-sub").textContent = currentProject().location || t("construction_project");
+      renderDash();
+    }
+  } else if (id === "screen-projects") {
+    renderProjects();
+  } else if (id === "screen-reports") {
+    renderReports();
+  } else if (id === "screen-tags") {
+    renderTags();
+  } else if (id === "screen-history") {
+    renderHistory();
+  } else if (id === "screen-addTxn") {
+    setTxnType(currentTxnType);
+  }
+}
+
+function toggleLang() { setLang(lang === "en" ? "ta" : "en"); }
+
+// ═══════════════════════════════════════════════════════
+//  DATA LAYER
+// ═══════════════════════════════════════════════════════
+const STORE = "et_projects_v1";
+const TAG_COLORS = ["#639922","#185FA5","#D85A30","#BA7517","#993556","#1D9E75","#534AB7","#993C1D","#3B6D11","#0F6E56"];
+const TODAY = new Date().toISOString().slice(0,10);
+
+let projects = [];
+let currentProjectId = null;
+let filterFrom = "";
+let filterTo   = "";
+let activePreset = "all";
+let filterOpen = false;
+let chartInstance = null;
+let currentTxnType = "out";
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmt(n) { return "₹" + Number(n).toLocaleString("en-IN", {minimumFractionDigits:0}); }
+function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function load() {
+  try { const r = localStorage.getItem(STORE); projects = r ? JSON.parse(r) : []; }
+  catch { projects = []; }
+}
+function save() { localStorage.setItem(STORE, JSON.stringify(projects)); }
+
+function getProject(id) { return projects.find(p => p.id === id); }
+function currentProject() { return getProject(currentProjectId); }
+
+function updateProject(fn) {
+  const i = projects.findIndex(p => p.id === currentProjectId);
+  if (i >= 0) { fn(projects[i]); save(); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILTERING
+// ═══════════════════════════════════════════════════════
+function inRange(date) {
+  if (!filterFrom && !filterTo) return true;
+  if (filterFrom && date < filterFrom) return false;
+  if (filterTo   && date > filterTo)   return false;
+  return true;
+}
+
+function getPreset(preset) {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  if (preset==="today") return { from:TODAY, to:TODAY };
+  if (preset==="week")  { const d=new Date(now); d.setDate(d.getDate()-6); return { from:d.toISOString().slice(0,10), to:TODAY }; }
+  if (preset==="month") return { from:new Date(y,m,1).toISOString().slice(0,10), to:TODAY };
+  if (preset==="year")  return { from:new Date(y,0,1).toISOString().slice(0,10), to:TODAY };
+  return { from:"", to:"" };
+}
+
+function applyPreset(preset) {
+  activePreset = preset;
+  if (preset === "all") { filterFrom=""; filterTo=""; }
+  else { const p=getPreset(preset); filterFrom=p.from; filterTo=p.to; }
+  filterOpen = false;
+  renderDash();
+}
+
+function applyCustomRange() {
+  filterFrom = document.getElementById("fr-from").value;
+  filterTo   = document.getElementById("fr-to").value;
+  activePreset = "custom";
+  filterOpen = false;
+  renderDash();
+}
+
+function clearFilter() {
+  activePreset="all"; filterFrom=""; filterTo=""; filterOpen=false;
+  renderDash();
+}
+
+function toggleFilter() { filterOpen = !filterOpen; renderDash(); }
+
+function filterLabel() {
+  if (activePreset==="today")  return t("filter_today");
+  if (activePreset==="week")   return t("filter_this_week");
+  if (activePreset==="month")  return t("filter_this_month");
+  if (activePreset==="year")   return t("filter_this_year");
+  if (activePreset==="custom") return filterFrom + " – " + filterTo;
+  return t("filter_all_time");
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2300);
+}
+
+// ═══════════════════════════════════════════════════════
+//  SCREEN NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  hideProjMenu();
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById("screen-" + id).classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function openSettings() { showScreen("settings"); }
+
+// ── Projects page ──
+let projectsTab = "active";
+function openProjects() { renderProjects(); showScreen("projects"); }
+function setProjectsTab(tab) {
+  projectsTab = tab;
+  document.getElementById("ptab-active").classList.toggle("active", tab==="active");
+  document.getElementById("ptab-completed").classList.toggle("active", tab==="completed");
+  renderProjects();
+}
+function renderProjects() {
+  const el = document.getElementById("projects-list");
+  const list = projects.filter(p => projectsTab==="completed" ? p.status==="completed" : p.status!=="completed");
+  let html = "";
+  if (list.length === 0) {
+    html += `<p style="text-align:center;color:#bbb;font-size:14px;margin:30px 0" data-i18n="no_projects_in_tab">${t("no_projects_in_tab")}</p>`;
+  } else {
+    list.forEach(p => {
+      const pIn  = p.receipts.reduce((s,r)=>s+Number(r.amount),0);
+      const pOut = p.expenses.reduce((s,e)=>s+Number(e.amount),0);
+      const pBal = pIn - pOut;
+      const pct  = p.budget>0 ? Math.min(100, Math.round((pOut/p.budget)*100))
+                 : (pIn>0 ? Math.min(100, Math.round((pOut/pIn)*100)) : 0);
+      const badgeCls = p.status==="completed"?"badge-completed":p.status==="onhold"?"badge-onhold":"badge-active";
+      const badgeLbl = p.status==="completed"?t("badge_completed"):p.status==="onhold"?t("badge_onhold"):t("badge_active");
+      html += `
+        <div class="proj-card" onclick="openProject('${esc(p.id)}')">
+          <div class="row-sb" style="margin-bottom:6px">
+            <div style="flex:1;min-width:0"><div class="proj-name">${esc(p.name)}</div></div>
+            <span class="badge ${badgeCls}" style="flex-shrink:0;margin-left:8px">${badgeLbl}</span>
+          </div>
+          ${p.location ? `<div class="proj-loc" style="margin-bottom:10px"><span class="mdi fill" style="color:var(--err);font-size:16px">location_on</span> ${esc(p.location)}</div>` : ""}
+          <div class="row-sb" style="margin-bottom:6px">
+            <span style="font-size:12px;color:var(--on-sv);font-weight:600">${t("budget_consumed")}</span>
+            <span style="font-size:12px;color:var(--on-s);font-weight:700">${pct}%</span>
+          </div>
+          <div class="proj-bar-track"><div class="proj-bar-fill" style="width:${pct}%;background:var(--inv-s)"></div></div>
+          <div class="grid3" style="margin-top:12px">
+            <div><div class="pstat-label">${t("received_lbl")}</div><div class="pstat-val" style="color:#059669">${fmt(pIn)}</div></div>
+            <div><div class="pstat-label">${t("spent_lbl")}</div><div class="pstat-val" style="color:#DC2626">${fmt(pOut)}</div></div>
+            <div><div class="pstat-label">${t("balance_lbl")}</div><div class="pstat-val" style="color:var(--on-s)">${fmt(pBal)}</div></div>
+          </div>
+        </div>`;
+    });
+  }
+  html += `
+    <div class="create-project-card" onclick="openCreateSheet()">
+      <div class="create-project-circle"><span class="mdi">add</span></div>
+      <div class="cp-text">${t("create_new_project")}</div>
+    </div>`;
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+//  REPORTS PAGE
+// ═══════════════════════════════════════════════════════
+let reportPeriod = "month";
+let cashChartInstance = null;
+
+function openReports() { renderReports(); showScreen("reports"); }
+
+function setReportPeriod(p) {
+  reportPeriod = p;
+  ["month","quarter","year"].forEach(x => document.getElementById("rtab-"+x).classList.toggle("active", x===p));
+  renderReports();
+}
+
+function isoLocal(d) {
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+
+// Returns {from, to, label} for the given period, offset 0=current, -1=previous
+function reportRange(period, offset) {
+  const now = new Date();
+  const loc = lang==="ta" ? "ta-IN" : "en-IN";
+  if (period === "month") {
+    const from = new Date(now.getFullYear(), now.getMonth()+offset, 1);
+    const to   = new Date(now.getFullYear(), now.getMonth()+offset+1, 0);
+    return { from, to, label: from.toLocaleDateString(loc, {month:"long", year:"numeric"}) };
+  }
+  if (period === "quarter") {
+    const qIndex = Math.floor(now.getMonth()/3) + offset;
+    const year = now.getFullYear() + Math.floor(qIndex/4);
+    const q = ((qIndex % 4) + 4) % 4;
+    const from = new Date(year, q*3, 1);
+    const to   = new Date(year, q*3+3, 0);
+    return { from, to, label: "Q" + (q+1) + " " + year };
+  }
+  // year
+  const year = now.getFullYear() + offset;
+  return { from: new Date(year,0,1), to: new Date(year,11,31), label: String(year) };
+}
+
+// Aggregate receipts/expenses across all projects within [fromISO, toISO]
+function aggregateRange(fromISO, toISO) {
+  let inSum = 0, outSum = 0; const catTotals = {};
+  projects.forEach(p => {
+    p.receipts.forEach(r => { if (r.date>=fromISO && r.date<=toISO) inSum += Number(r.amount); });
+    p.expenses.forEach(e => {
+      if (e.date>=fromISO && e.date<=toISO) {
+        outSum += Number(e.amount);
+        const tag = e.tag || t("others_cat");
+        catTotals[tag] = (catTotals[tag]||0) + Number(e.amount);
+      }
+    });
+  });
+  return { inSum, outSum, catTotals };
+}
+
+// Build cash-flow buckets (labels + received[] + spent[]) for the chart
+function cashFlowBuckets(period, fromDate, toDate) {
+  const loc = lang==="ta" ? "ta-IN" : "en-IN";
+  const labels = [], received = [], spent = [];
+  const fromISO = isoLocal(fromDate), toISO = isoLocal(toDate);
+  if (period === "month") {
+    const daysInMonth = toDate.getDate();
+    const n = Math.ceil(daysInMonth/7);
+    for (let i=0;i<n;i++){ labels.push("W"+(i+1)); received.push(0); spent.push(0); }
+    const add = (dateStr, amt, arr) => {
+      const day = new Date(dateStr+"T00:00:00").getDate();
+      const idx = Math.min(n-1, Math.floor((day-1)/7));
+      arr[idx] += amt;
+    };
+    projects.forEach(p => {
+      p.receipts.forEach(r => { if (r.date>=fromISO && r.date<=toISO) add(r.date, Number(r.amount), received); });
+      p.expenses.forEach(e => { if (e.date>=fromISO && e.date<=toISO) add(e.date, Number(e.amount), spent); });
+    });
+  } else {
+    const startIdx = fromDate.getFullYear()*12 + fromDate.getMonth();
+    const endIdx   = toDate.getFullYear()*12 + toDate.getMonth();
+    const n = endIdx - startIdx + 1;
+    for (let i=0;i<n;i++){
+      const d = new Date(fromDate.getFullYear(), fromDate.getMonth()+i, 1);
+      labels.push(d.toLocaleDateString(loc, {month:"short"}));
+      received.push(0); spent.push(0);
+    }
+    const bucketOf = (dateStr) => {
+      const d = new Date(dateStr+"T00:00:00");
+      return d.getFullYear()*12 + d.getMonth() - startIdx;
+    };
+    projects.forEach(p => {
+      p.receipts.forEach(r => { if (r.date>=fromISO && r.date<=toISO){ const i=bucketOf(r.date); if(i>=0&&i<n) received[i]+=Number(r.amount); } });
+      p.expenses.forEach(e => { if (e.date>=fromISO && e.date<=toISO){ const i=bucketOf(e.date); if(i>=0&&i<n) spent[i]+=Number(e.amount); } });
+    });
+  }
+  return { labels, received, spent };
+}
+
+function renderReports() {
+  const cur  = reportRange(reportPeriod, 0);
+  const prev = reportRange(reportPeriod, -1);
+  document.getElementById("report-subtitle").textContent = t("reports_analytics_for") + " " + cur.label;
+
+  const fromISO = isoLocal(cur.from), toISO = isoLocal(cur.to);
+  const { inSum, outSum, catTotals } = aggregateRange(fromISO, toISO);
+  const net = inSum - outSum;
+  const prevAgg = aggregateRange(isoLocal(prev.from), isoLocal(prev.to));
+  const prevNet = prevAgg.inSum - prevAgg.outSum;
+
+  // Net-balance trend vs previous period
+  let trendHTML = "";
+  if (prevNet !== 0) {
+    const pct = ((net - prevNet) / Math.abs(prevNet)) * 100;
+    const up = pct >= 0;
+    trendHTML = `<div class="report-trend" style="color:${up?'#059669':'#DC2626'}">${icon(up?'trending_up':'trending_down',16)} ${up?'+':''}${pct.toFixed(1)}% ${t("vs_last")} ${t("word_"+reportPeriod)}</div>`;
+  }
+
+  // Spent progress (vs total budget if set, else vs received)
+  const totalBudget = projects.reduce((s,p)=>s+Number(p.budget||0),0);
+  const denom = totalBudget>0 ? totalBudget : inSum;
+  const spentPct = denom>0 ? Math.min(100, Math.round((outSum/denom)*100)) : 0;
+  const spentLabelTxt = `${spentPct}% ${totalBudget>0 ? t("of_budget") : t("of_received")}`;
+
+  // Top categories (top 5 + Others)
+  const entries = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  const top = entries.slice(0,5);
+  const restSum = entries.slice(5).reduce((s,[,v])=>s+v,0);
+  if (restSum > 0) top.push([t("others_cat"), restSum]);
+  const maxCat = top.length ? top[0][1] : 0;
+
+  const catHTML = top.length ? top.map(([name,val],i)=>{
+    const color = TAG_COLORS[i % TAG_COLORS.length];
+    const w = maxCat>0 ? Math.round((val/maxCat)*100) : 0;
+    return `<div class="cat-row">
+      <div class="cat-top">
+        <span class="cat-dot" style="background:${color}"></span>
+        <span class="cat-name">${esc(name)}</span>
+        <span class="cat-amt">${fmt(val)}</span>
+      </div>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${w}%;background:${color}"></div></div>
+    </div>`;
+  }).join("") : `<p style="text-align:center;color:#bbb;font-size:14px;padding:8px 0">${t("reports_no_data")}</p>`;
+
+  const el = document.getElementById("reports-content");
+  el.innerHTML = `
+    <div class="report-card">
+      <div class="report-deco" style="background:#F0F9FF"></div>
+      <div class="report-card-label"><span class="report-icon" style="background:#F0F9FF;color:#0284C7">${icon("account_balance_wallet",18)}</span>${t("net_balance")}</div>
+      <div class="report-card-value">${fmt(net)}</div>
+      ${trendHTML}
+    </div>
+    <div class="report-card">
+      <div class="report-deco" style="background:#ECFDF5"></div>
+      <div class="report-card-label"><span class="report-icon" style="background:#ECFDF5;color:#059669">${icon("arrow_downward",18)}</span>${t("total_received")}</div>
+      <div class="report-card-value">${fmt(inSum)}</div>
+    </div>
+    <div class="report-card">
+      <div class="report-deco" style="background:#FEF2F2"></div>
+      <div class="report-card-label"><span class="report-icon" style="background:#FEF2F2;color:#DC2626">${icon("arrow_upward",18)}</span>${t("total_spent")}</div>
+      <div class="report-card-value">${fmt(outSum)}</div>
+      <div class="spent-bar-track"><div class="spent-bar-fill" style="width:${spentPct}%"></div></div>
+      <div class="spent-bar-label">${spentLabelTxt}</div>
+    </div>
+    <div class="report-card">
+      <p class="section-title" style="margin-bottom:4px">${t("cash_flow")}</p>
+      <div class="cashflow-wrap"><canvas id="cashflow-chart"></canvas></div>
+    </div>
+    <div class="report-card">
+      <p class="section-title" style="margin-bottom:14px">${t("top_categories")}</p>
+      ${catHTML}
+    </div>`;
+
+  // Cash-flow grouped bar chart
+  const buckets = cashFlowBuckets(reportPeriod, cur.from, cur.to);
+  if (cashChartInstance) { cashChartInstance.destroy(); cashChartInstance = null; }
+  const ctx = document.getElementById("cashflow-chart").getContext("2d");
+  cashChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: buckets.labels,
+      datasets: [
+        { label: t("received_lbl"), data: buckets.received, backgroundColor: "#2e7d32", borderRadius: 4 },
+        { label: t("spent_lbl"),    data: buckets.spent,    backgroundColor: "#c62828", borderRadius: 4 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, font: { family: "Hanken Grotesk" } } },
+        tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${fmt(c.raw)}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: "Hanken Grotesk" } } },
+        y: { beginAtZero: true, ticks: { font: { family: "Hanken Grotesk" }, callback: (v)=> v>=1000 ? (v/1000)+"k" : v } }
+      }
+    }
+  });
+}
+
+// ── Project header popover menu ──
+function toggleProjMenu(e) {
+  if (e) e.stopPropagation();
+  const m = document.getElementById("proj-menu");
+  if (m.classList.contains("open")) { hideProjMenu(); return; }
+  m.classList.add("open");
+  // Close on the next outside click (added async so this same click doesn't trigger it)
+  setTimeout(() => document.addEventListener("click", outsideCloseMenu), 0);
+}
+function outsideCloseMenu(e) {
+  const m = document.getElementById("proj-menu");
+  if (m && e.target.closest && e.target.closest("#proj-menu")) return; // clicks inside menu keep it open
+  hideProjMenu();
+}
+function hideProjMenu() {
+  const m = document.getElementById("proj-menu");
+  if (m) m.classList.remove("open");
+  document.removeEventListener("click", outsideCloseMenu);
+}
+
+function clearAllData() {
+  if (!confirm(t("confirm_clear_all"))) return;
+  projects = [];
+  save();
+  showScreen("home");
+  renderHome();
+  showToast(t("toast_cleared"));
+}
+
+// ── Unified transaction type toggle ──────────────────────
+function setTxnType(type) {
+  currentTxnType = type;
+  const btnExp = document.getElementById("btn-expense");
+  const btnInc = document.getElementById("btn-income");
+  const amtLabel = document.getElementById("txn-amount-label");
+  const tagWrap = document.getElementById("tag-field-wrap");
+  const methodWrap = document.getElementById("method-field-wrap");
+  const actionBtn = document.getElementById("txn-action-btn");
+  const noTagHint = document.getElementById("no-tag-hint");
+  const btnStyle = "display:flex;align-items:center;justify-content:center;gap:8px";
+  if (type === "out") {
+    btnExp.className = "txn-toggle-btn toggle-expense";
+    btnInc.className = "txn-toggle-btn toggle-income-inactive";
+    amtLabel.textContent = t("amount_spent_lbl");
+    tagWrap.style.display = "flex";
+    methodWrap.style.display = "none";
+    noTagHint.style.display = noTagHint.dataset.hasNoTags === "1" ? "block" : "none";
+    actionBtn.className = "btn btn-red";
+    actionBtn.style.cssText = btnStyle;
+    actionBtn.innerHTML = icon("remove",20) + '<span>' + t("add_expense_btn") + '</span>';
+  } else {
+    btnInc.className = "txn-toggle-btn toggle-income-active";
+    btnExp.className = "txn-toggle-btn toggle-expense-inactive";
+    amtLabel.textContent = t("amount_received_lbl");
+    tagWrap.style.display = "none";
+    methodWrap.style.display = "flex";
+    noTagHint.style.display = "none";
+    actionBtn.className = "btn btn-green";
+    actionBtn.style.cssText = btnStyle;
+    actionBtn.innerHTML = icon("add",20) + '<span>' + t("add_income_btn") + '</span>';
+  }
+}
+
+function addTransaction() {
+  if (currentTxnType === "out") addExpense();
+  else addIncome();
+}
+
+function showSubScreen(sub) {
+  if (sub === "dash") { renderDash(); showScreen("project"); return; }
+  if (sub === "addIn") {
+    document.getElementById("txn-amount").value = "";
+    document.getElementById("txn-note").value   = "";
+    document.getElementById("txn-date").value   = TODAY;
+    document.getElementById("txn-method").value  = "cash";
+    populateTagSelect();
+    setTxnType("in");
+    showScreen("addTxn"); return;
+  }
+  if (sub === "addOut") {
+    document.getElementById("txn-amount").value = "";
+    document.getElementById("txn-note").value   = "";
+    document.getElementById("txn-date").value   = TODAY;
+    populateTagSelect();
+    setTxnType("out");
+    showScreen("addTxn"); return;
+  }
+  if (sub === "tags")    { renderTags();    showScreen("tags");    return; }
+  if (sub === "history") { renderHistory(); showScreen("history"); return; }
+}
+
+function openProject(id) {
+  currentProjectId = id;
+  activePreset = "all"; filterFrom=""; filterTo=""; filterOpen=false;
+  const p = getProject(id);
+  document.getElementById("proj-hdr-name").textContent = p.name;
+  document.getElementById("proj-hdr-sub").textContent  = p.location || t("construction_project");
+  renderDash();
+  showScreen("project");
+}
+
+function backToHome() {
+  if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
+  if (cashChartInstance) { cashChartInstance.destroy(); cashChartInstance=null; }
+  currentProjectId = null;
+  renderHome();
+  showScreen("home");
+}
+
+// ═══════════════════════════════════════════════════════
+//  HOME RENDER
+// ═══════════════════════════════════════════════════════
+function renderHome() {
+  const el = document.getElementById("home-content");
+  if (projects.length === 0) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🏗</div>
+        <div class="empty-title">${t("no_projects_title")}</div>
+        <div class="empty-sub">${t("no_projects_sub")}</div>
+        <button class="btn btn-dark" style="max-width:260px;margin:0 auto;display:block" onclick="openCreateSheet()">${t("create_project_cta")}</button>
+      </div>`;
+    return;
+  }
+
+  const totalIn  = projects.reduce((s,p)=>s+p.receipts.reduce((a,r)=>a+Number(r.amount),0),0);
+  const totalOut = projects.reduce((s,p)=>s+p.expenses.reduce((a,e)=>a+Number(e.amount),0),0);
+  const bal = totalIn - totalOut;
+  const projWord = projects.length===1 ? t("project_singular") : t("project_plural");
+
+  let html = `
+    <div class="dark-strip">
+      <p class="muted" style="color:#aaa;margin-bottom:10px;font-size:12px;font-weight:500">${projects.length} ${projWord} · ${t("overall_label")}</p>
+      <div class="grid3">
+        <div class="stat"><div class="stat-label" style="color:#81c784">${t("received_lbl")}</div><div class="stat-value">${fmt(totalIn)}</div></div>
+        <div class="stat"><div class="stat-label" style="color:#ef9a9a">${t("spent_lbl")}</div><div class="stat-value">${fmt(totalOut)}</div></div>
+        <div class="stat"><div class="stat-label" style="color:#90caf9">${t("balance_lbl")}</div><div class="stat-value">${fmt(bal)}</div></div>
+      </div>
+    </div>`;
+
+  projects.forEach(p => {
+    const pIn  = p.receipts.reduce((s,r)=>s+Number(r.amount),0);
+    const pOut = p.expenses.reduce((s,e)=>s+Number(e.amount),0);
+    const pBal = pIn - pOut;
+    const pct  = pIn>0 ? Math.min(100, Math.round((pOut/pIn)*100)) : 0;
+    const barColor = pBal < 0 ? "var(--err,#c62828)" : "var(--success,#2e7d32)";
+    const badgeCls = p.status==="completed"?"badge-completed":p.status==="onhold"?"badge-onhold":"badge-active";
+    const badgeLbl = p.status==="completed"?t("badge_completed"):p.status==="onhold"?t("badge_onhold"):t("badge_active");
+    html += `
+      <div class="proj-card" onclick="openProject('${esc(p.id)}')">
+        <div class="row-sb" style="margin-bottom:6px">
+          <div style="flex:1;min-width:0">
+            <div class="proj-name">${esc(p.name)}</div>
+            ${p.location ? `<div class="proj-loc"><span class="mdi fill" style="color:var(--err,#c62828);font-size:16px">location_on</span> ${esc(p.location)}</div>` : ""}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px">
+            <span class="badge ${badgeCls}">${badgeLbl}</span>
+            <button onclick="event.stopPropagation();openEditSheet('${esc(p.id)}')" style="background:none;border:none;color:var(--on-sv);cursor:pointer;line-height:1;padding:2px;font-family:inherit">${icon("edit",20)}</button>
+          </div>
+        </div>
+        <div class="proj-bar-track"><div class="proj-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
+        <div class="grid3">
+          <div class="stat stat-green"><div class="stat-label">${t("received_lbl")}</div><div class="stat-value">${fmt(pIn)}</div></div>
+          <div class="stat stat-red"><div class="stat-label">${t("spent_lbl")}</div><div class="stat-value">${fmt(pOut)}</div></div>
+          <div class="stat ${pBal>=0?"stat-blue":"stat-orange"}"><div class="stat-label">${t("balance_lbl")}</div><div class="stat-value">${fmt(pBal)}</div></div>
+        </div>
+      </div>`;
+  });
+
+  html += `<button class="btn btn-ghost" style="margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px" onclick="openCreateSheet()">${icon("add",20)}<span>${t("new_project_btn")}</span></button>`;
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROJECT DASHBOARD RENDER
+// ═══════════════════════════════════════════════════════
+function renderDash() {
+  const p = currentProject(); if (!p) return;
+  const fR = p.receipts.filter(r=>inRange(r.date));
+  const fE = p.expenses.filter(e=>inRange(e.date));
+  const tIn  = fR.reduce((s,r)=>s+Number(r.amount),0);
+  const tOut = fE.reduce((s,e)=>s+Number(e.amount),0);
+  const bal  = tIn - tOut;
+  const isFiltered = activePreset !== "all";
+  const lbl = filterLabel();
+  const allTags = [...new Set([...p.tags, ...p.expenses.map(e=>e.tag).filter(Boolean)])];
+
+  // Tag totals for pie
+  const tagTotals = {};
+  fE.forEach(e=>{ const tagKey=e.tag||t("untagged"); tagTotals[tagKey]=(tagTotals[tagKey]||0)+Number(e.amount); });
+  const pieEntries = Object.entries(tagTotals);
+
+  // Filter bar HTML
+  const filterHTML = `
+    <div class="filter-bar">
+      <div class="filter-trigger" onclick="toggleFilter()">
+        <div class="row">
+          ${icon("calendar_month")}
+          <span class="filter-label ${isFiltered?"active":""}">${lbl}</span>
+          ${isFiltered ? `<span class="filter-badge">${t("filter_active_badge")}</span>` : ""}
+        </div>
+        <div class="row">
+          ${isFiltered ? `<button onclick="event.stopPropagation();clearFilter()" style="background:none;border:none;color:#c62828;font-size:12px;cursor:pointer;font-family:inherit">${t("filter_clear")}</button>` : ""}
+          <span style="font-size:18px;color:#aaa;display:inline-flex;transition:transform .2s;transform:rotate(${filterOpen?180:0}deg)">${icon("arrow_drop_down")}</span>
+        </div>
+      </div>
+      <div class="filter-body ${filterOpen?"open":""}">
+        <p class="section-title">${t("quick_select")}</p>
+        <div class="preset-chips">
+          ${[["all",t("filter_all_time")],["today",t("filter_today")],["week",t("filter_this_week")],["month",t("filter_this_month")],["year",t("filter_this_year")]].map(([v,l])=>
+            `<button class="chip ${activePreset===v?"active":""}" onclick="applyPreset('${v}')">${l}</button>`
+          ).join("")}
+        </div>
+        <p class="section-title">${t("custom_range")}</p>
+        <div class="date-grid">
+          <div><label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">${t("from_lbl")}</label>
+            <input type="date" id="fr-from" class="inp" style="font-size:13px;padding:8px 10px" value="${filterFrom}"/></div>
+          <div><label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">${t("to_lbl")}</label>
+            <input type="date" id="fr-to" class="inp" style="font-size:13px;padding:8px 10px" value="${filterTo}"/></div>
+        </div>
+        <button onclick="applyCustomRange()" style="width:100%;background:#1565c0;border:none;border-radius:10px;padding:10px 0;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">${t("apply_custom_range")}</button>
+      </div>
+    </div>`;
+
+  // Pie chart placeholder
+  const pieHTML = pieEntries.length > 0
+    ? `<div class="card">
+        <div class="row-sb" style="margin-bottom:8px">
+          <span class="section-title" style="margin:0">${t("expenses_by_tag")}</span>
+          ${isFiltered?`<span style="font-size:11px;color:#1565c0;background:#e3f2fd;padding:2px 8px;border-radius:10px">${lbl}</span>`:""}
+        </div>
+        <div class="chart-wrap"><canvas id="pie-chart"></canvas></div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">
+          ${pieEntries.map(([name,val],i)=>`
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#555">
+              <div style="width:8px;height:8px;border-radius:50%;background:${TAG_COLORS[i%TAG_COLORS.length]};flex-shrink:0"></div>
+              <span>${esc(name)} — ${fmt(val)}</span>
+            </div>`).join("")}
+        </div>
+      </div>`
+    : `<div class="card" style="text-align:center;color:#bbb;font-size:14px;padding:24px">${isFiltered?t("no_expenses_period"):t("add_expenses_hint")}</div>`;
+
+  // Tag map
+  const tagMapHTML = allTags.length > 0
+    ? `<div class="card">
+        <p class="section-title">${t("tags_section")} ${isFiltered?`· ${lbl}`:""}</p>
+        <div class="tag-row">${allTags.map((tag,i)=>{
+          const tot=fE.filter(e=>e.tag===tag).reduce((s,e)=>s+Number(e.amount),0);
+          return `<div class="tag-pill" style="background:${TAG_COLORS[i%TAG_COLORS.length]}22;border:1.5px solid ${TAG_COLORS[i%TAG_COLORS.length]}">
+            <span style="color:${TAG_COLORS[i%TAG_COLORS.length]};font-weight:700">${esc(tag)}</span>
+            ${tot>0?`<span style="color:#666">${fmt(tot)}</span>`:""}
+          </div>`;
+        }).join("")}</div>
+      </div>` : "";
+
+  const el = document.getElementById("proj-content");
+  el.innerHTML = `
+    ${filterHTML}
+    <div class="grid2" style="margin-bottom:14px">
+      <button class="money-btn" style="background:#1b6b51" onclick="showSubScreen('addIn')">${icon("arrow_upward",20)}<span>${t("money_in_btn")}</span></button>
+      <button class="money-btn" style="background:#b91c1c" onclick="showSubScreen('addOut')">${icon("arrow_downward",20)}<span>${t("money_out_btn")}</span></button>
+    </div>
+    ${pieHTML}
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="stat stat-green"><div class="stat-label">${t("received_lbl")}</div><div class="stat-value">${fmt(tIn)}</div></div>
+      <div class="stat stat-red"><div class="stat-label">${t("spent_lbl")}</div><div class="stat-value">${fmt(tOut)}</div></div>
+      <div class="stat ${bal>=0?"stat-blue":"stat-orange"}"><div class="stat-label">${t("balance_lbl")}</div><div class="stat-value">${fmt(bal)}</div></div>
+    </div>
+    ${tagMapHTML}`;
+
+  // Render pie chart
+  if (pieEntries.length > 0) {
+    if (chartInstance) { chartInstance.destroy(); chartInstance=null; }
+    const ctx = document.getElementById("pie-chart").getContext("2d");
+    chartInstance = new Chart(ctx, {
+      type:"doughnut",
+      data:{
+        labels: pieEntries.map(([n])=>n),
+        datasets:[{ data: pieEntries.map(([,v])=>v), backgroundColor: pieEntries.map((_,i)=>TAG_COLORS[i%TAG_COLORS.length]), borderWidth:2, borderColor:"#fff" }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(ctx)=>` ${ctx.label}: ${fmt(ctx.raw)}` } } },
+        cutout:"55%"
+      }
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  TAGS RENDER
+// ═══════════════════════════════════════════════════════
+function renderTags() {
+  const p = currentProject(); if (!p) return;
+  const el = document.getElementById("tags-content");
+  const tagListHTML = p.tags.length===0
+    ? `<p style="text-align:center;color:#bbb;font-size:14px;margin-top:28px">${t("no_tags_yet")}</p>`
+    : p.tags.map((tag,i)=>{
+        const tot=p.expenses.filter(e=>e.tag===tag).reduce((s,e)=>s+Number(e.amount),0);
+        const cnt=p.expenses.filter(e=>e.tag===tag).length;
+        const entryWord = cnt===1 ? t("entry_singular") : t("entry_plural");
+        return `<div class="tag-list-item">
+          <div class="row">
+            <div style="width:12px;height:12px;border-radius:50%;background:${TAG_COLORS[i%TAG_COLORS.length]};flex-shrink:0"></div>
+            <div>
+              <div style="font-weight:600;font-size:15px;color:#1a1a1a">${esc(tag)}</div>
+              <div style="font-size:12px;color:#888">${cnt} ${entryWord} · ${fmt(tot)}</div>
+            </div>
+          </div>
+          <button onclick="deleteTag('${esc(tag)}')" style="background:none;border:none;color:#c62828;cursor:pointer;line-height:1;padding:0;font-family:inherit">${icon("close",20)}</button>
+        </div>`;
+      }).join("");
+
+  const suggestions = [
+    t("sug_cement"),t("sug_labour"),t("sug_steel"),t("sug_sand"),
+    t("sug_bricks"),t("sug_plumbing"),t("sug_electrical"),t("sug_tiles"),
+    t("sug_paint"),t("sug_woodwork"),t("sug_foundation"),t("sug_roofing")
+  ];
+  el.innerHTML = `
+    <div class="card">
+      <label class="lbl" style="margin-top:0">${t("create_tag_lbl")}</label>
+      <div class="row">
+        <input type="text" id="new-tag-inp" class="inp" placeholder="${t("tag_inp_ph")}" style="flex:1" onkeydown="if(event.key==='Enter')addTag()"/>
+        <button onclick="addTag()" style="background:#2e7d32;border:none;border-radius:10px;padding:10px 18px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap;font-family:inherit">${t("add_tag_btn")}</button>
+      </div>
+      <div class="suggestion-chips">
+        ${suggestions.map(s=>`<button class="sug-chip" onclick="document.getElementById('new-tag-inp').value='${esc(s)}'">${s}</button>`).join("")}
+      </div>
+    </div>
+    ${tagListHTML}`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  HISTORY RENDER
+// ═══════════════════════════════════════════════════════
+function renderHistory() {
+  const p = currentProject(); if (!p) return;
+  const isFiltered = activePreset !== "all";
+  const fR = p.receipts.filter(r=>inRange(r.date));
+  const fE = p.expenses.filter(e=>inRange(e.date));
+  const timeline = [
+    ...fR.map(r=>({...r,type:"in"})),
+    ...fE.map(e=>({...e,type:"out"}))
+  ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const el = document.getElementById("history-content");
+  const txnWord = timeline.length===1 ? t("transaction_singular") : t("transaction_plural");
+  let html = `<p class="muted" style="margin-bottom:12px">${timeline.length} ${txnWord}${isFiltered?" · "+filterLabel():""}</p>`;
+  if (timeline.length===0) {
+    html += `<p style="text-align:center;color:#bbb;margin-top:40px;font-size:14px">${isFiltered?t("no_txn_period"):t("no_txn_yet")}</p>`;
+  } else {
+    // Group transactions by date (timeline already sorted newest-first)
+    const groups = [];
+    const groupIndex = {};
+    timeline.forEach(item=>{
+      if (groupIndex[item.date]===undefined) { groupIndex[item.date]=groups.length; groups.push({date:item.date, items:[]}); }
+      groups[groupIndex[item.date]].items.push(item);
+    });
+
+    groups.forEach(g=>{
+      const dayIn  = g.items.filter(i=>i.type==="in").reduce((s,i)=>s+Number(i.amount),0);
+      const dayOut = g.items.filter(i=>i.type==="out").reduce((s,i)=>s+Number(i.amount),0);
+      html += `
+        <div class="date-group-header">
+          <span>${esc(formatDateHeader(g.date))}</span>
+          <span class="date-group-sub">
+            ${dayIn>0?`<span style="color:#2e7d32">+${fmt(dayIn)}</span>`:""}
+            ${dayOut>0?`<span style="color:#c62828;margin-left:8px">−${fmt(dayOut)}</span>`:""}
+          </span>
+        </div>`;
+      g.items.forEach(item=>{
+        const title = item.type==="in" ? (item.note||t("money_received_default")) : (item.note||item.tag||t("expense_default"));
+        const parts = [];
+        if (item.tag) parts.push(item.tag);
+        if (item.type==="in" && item.method) parts.push(t(item.method==="online"?"method_online":"method_cash"));
+        const meta = parts.join(" · ");
+        html += `
+          <div class="txn-row ${item.type==="in"?"txn-in":"txn-out"}">
+            <div class="row" style="flex:1;min-width:0">
+              <div class="txn-icon">${item.type==="in"?icon("arrow_downward"):icon("arrow_upward")}</div>
+              <div style="min-width:0">
+                <div class="txn-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(title)}</div>
+                ${meta?`<div class="txn-meta">${esc(meta)}</div>`:""}
+              </div>
+            </div>
+            <div class="row" style="flex-shrink:0;margin-left:8px">
+              <span class="${item.type==="in"?"txn-amt-in":"txn-amt-out"}">${item.type==="in"?"+":"−"}${fmt(item.amount)}</span>
+              <button class="txn-edit-btn" onclick="openTxnEdit('${item.id}','${item.type}')">${icon("edit",18)}</button>
+              <button class="del-btn" onclick="${item.type==="in"?`deleteReceipt('${item.id}')`:`deleteExpense('${item.id}')`}">${icon("close",20)}</button>
+            </div>
+          </div>`;
+      });
+    });
+  }
+  el.innerHTML = html;
+}
+
+function formatDateHeader(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d)) return dateStr;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yest = new Date(today); yest.setDate(yest.getDate()-1);
+  const dd = new Date(d); dd.setHours(0,0,0,0);
+  if (dd.getTime()===today.getTime()) return t("filter_today");
+  if (dd.getTime()===yest.getTime()) return t("yesterday_label");
+  try { return d.toLocaleDateString(lang==="ta"?"ta-IN":"en-IN", {day:"numeric", month:"short", year:"numeric"}); }
+  catch { return dateStr; }
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADD INCOME / EXPENSE
+// ═══════════════════════════════════════════════════════
+function addIncome() {
+  const amt = parseFloat(document.getElementById("txn-amount").value);
+  if (!amt || amt <= 0) { showToast(t("toast_valid_amount")); return; }
+  const note = document.getElementById("txn-note").value.trim();
+  const date = document.getElementById("txn-date").value || TODAY;
+  const method = document.getElementById("txn-method").value || "cash";
+  updateProject(p=>{ p.receipts.push({id:uid(),amount:amt,note,date,method}); });
+  showToast(t("toast_income_added"));
+  showSubScreen("dash");
+}
+
+function addExpense() {
+  const amt = parseFloat(document.getElementById("txn-amount").value);
+  if (!amt || amt <= 0) { showToast(t("toast_valid_amount")); return; }
+  const tag  = document.getElementById("txn-tag").value;
+  const note = document.getElementById("txn-note").value.trim();
+  const date = document.getElementById("txn-date").value || TODAY;
+  updateProject(p=>{ p.expenses.push({id:uid(),amount:amt,tag,note,date}); });
+  showToast(t("toast_expense_added"));
+  showSubScreen("dash");
+}
+
+function populateTagSelect() {
+  const p = currentProject(); if (!p) return;
+  const allTags = [...new Set([...p.tags, ...p.expenses.map(e=>e.tag).filter(Boolean)])];
+  const sel = document.getElementById("txn-tag");
+  sel.innerHTML = `<option value="">${t("select_tag_opt")}</option>` + allTags.map(tag=>`<option value="${esc(tag)}">${esc(tag)}</option>`).join("");
+  const hint = document.getElementById("no-tag-hint");
+  hint.dataset.hasNoTags = allTags.length===0 ? "1" : "0";
+  hint.style.display = (allTags.length===0 && currentTxnType==="out") ? "block" : "none";
+}
+
+// ═══════════════════════════════════════════════════════
+//  TAGS
+// ═══════════════════════════════════════════════════════
+function addTag() {
+  const inp = document.getElementById("new-tag-inp");
+  const tagName = inp.value.trim(); if (!tagName) return;
+  const p = currentProject();
+  if (p.tags.includes(tagName)) { showToast(t("toast_tag_exists")); return; }
+  updateProject(pr=>{ pr.tags.push(tagName); });
+  inp.value = "";
+  showToast(t("toast_tag_created"));
+  renderTags();
+}
+
+function deleteTag(tagName) {
+  updateProject(p=>{ p.tags=p.tags.filter(x=>x!==tagName); });
+  showToast(t("toast_tag_removed"));
+  renderTags();
+}
+
+function deleteReceipt(id) {
+  updateProject(p=>{ p.receipts=p.receipts.filter(r=>r.id!==id); });
+  showToast(t("toast_deleted"));
+  renderHistory();
+}
+
+function deleteExpense(id) {
+  updateProject(p=>{ p.expenses=p.expenses.filter(e=>e.id!==id); });
+  showToast(t("toast_deleted"));
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PROJECT CRUD
+// ═══════════════════════════════════════════════════════
+function openCreateSheet() {
+  document.getElementById("new-proj-name").value = "";
+  document.getElementById("new-proj-loc").value  = "";
+  document.getElementById("new-proj-budget").value = "";
+  document.querySelectorAll("#status-picker .chip").forEach(c=>{
+    c.classList.toggle("active", c.dataset.status==="active");
+  });
+  document.getElementById("sheet-create").classList.add("open");
+  setTimeout(()=>document.getElementById("new-proj-name").focus(),300);
+}
+
+function closeCreateSheet() {
+  document.getElementById("sheet-create").classList.remove("open");
+}
+
+function closeSheet(e) {
+  if (e.target === document.getElementById("sheet-create")) closeCreateSheet();
+}
+
+function pickStatus(btn) {
+  document.querySelectorAll("#status-picker .chip").forEach(c=>c.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function createProject() {
+  const name = document.getElementById("new-proj-name").value.trim();
+  if (!name) { showToast(t("toast_enter_proj_name")); return; }
+  const loc    = document.getElementById("new-proj-loc").value.trim();
+  const budget = parseFloat(document.getElementById("new-proj-budget").value)||0;
+  const status = document.querySelector("#status-picker .chip.active")?.dataset.status || "active";
+  const proj = { id:uid(), name, location:loc, status, budget, receipts:[], expenses:[], tags:[], createdAt:TODAY };
+  projects.push(proj);
+  save();
+  closeCreateSheet();
+  showToast(t("toast_proj_created"));
+  openProject(proj.id);
+}
+
+function deleteProject(id) {
+  if (!confirm(t("confirm_delete_project"))) return;
+  projects = projects.filter(p=>p.id!==id);
+  save();
+  showToast(t("toast_proj_deleted"));
+  renderHome();
+}
+
+function deleteProjectFromEdit() {
+  const id = editingProjectId;
+  if (!id) return;
+  if (!confirm(t("confirm_delete_project"))) return;
+  projects = projects.filter(p=>p.id!==id);
+  save();
+  document.getElementById("sheet-edit").classList.remove("open");
+  editingProjectId = null;
+  if (currentProjectId === id) { currentProjectId = null; showScreen("home"); }
+  renderHome();
+  showToast(t("toast_proj_deleted"));
+}
+
+// ── Edit project ──────────────────────────────────────
+let editingProjectId = null;
+
+function openEditSheet(id) {
+  const p = getProject(id); if (!p) return;
+  editingProjectId = id;
+  document.getElementById("edit-proj-name").value   = p.name || "";
+  document.getElementById("edit-proj-loc").value    = p.location || "";
+  document.getElementById("edit-proj-budget").value = p.budget || "";
+  document.querySelectorAll("#edit-status-picker .chip").forEach(c=>{
+    c.classList.toggle("active", c.dataset.status === (p.status || "active"));
+  });
+  document.getElementById("sheet-edit").classList.add("open");
+  setTimeout(()=>document.getElementById("edit-proj-name").focus(), 300);
+}
+
+function closeEditSheet(e) {
+  if (!e || e.target === document.getElementById("sheet-edit")) {
+    document.getElementById("sheet-edit").classList.remove("open");
+    editingProjectId = null;
+  }
+}
+
+function pickEditStatus(btn) {
+  document.querySelectorAll("#edit-status-picker .chip").forEach(c=>c.classList.remove("active"));
+  btn.classList.add("active");
+}
+
+function saveEditProject() {
+  const name = document.getElementById("edit-proj-name").value.trim();
+  if (!name) { showToast(t("toast_proj_name_required")); return; }
+  const loc    = document.getElementById("edit-proj-loc").value.trim();
+  const budget = parseFloat(document.getElementById("edit-proj-budget").value) || 0;
+  const status = document.querySelector("#edit-status-picker .chip.active")?.dataset.status || "active";
+  const idx = projects.findIndex(p=>p.id===editingProjectId);
+  if (idx < 0) return;
+  projects[idx] = { ...projects[idx], name, location:loc, budget, status };
+  save();
+  document.getElementById("sheet-edit").classList.remove("open");
+  editingProjectId = null;
+  showToast(t("toast_proj_updated"));
+  if (currentProjectId === projects[idx].id) {
+    document.getElementById("proj-hdr-name").textContent = name;
+    document.getElementById("proj-hdr-sub").textContent  = loc || t("construction_project");
+    renderDash();
+  } else {
+    renderHome();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  EDIT TRANSACTION
+// ═══════════════════════════════════════════════════════
+let editTxnId = null;
+let editTxnType = null;
+
+function openTxnEdit(id, type) {
+  const p = currentProject(); if (!p) return;
+  const item = type === "in"
+    ? p.receipts.find(r => r.id === id)
+    : p.expenses.find(e => e.id === id);
+  if (!item) return;
+
+  editTxnId   = id;
+  editTxnType = type;
+
+  document.getElementById("txn-sheet-title").textContent    = type === "in" ? t("edit_income_title") : t("edit_expense_title");
+  document.getElementById("txn-sheet-subtitle").textContent = type === "in" ? t("money_in_txn_subtitle") : t("money_out_txn_subtitle");
+  document.getElementById("txn-edit-amount").value = item.amount || "";
+  document.getElementById("txn-edit-date").value   = item.date   || "";
+  document.getElementById("txn-edit-note").value   = item.note   || "";
+
+  const tagWrap = document.getElementById("txn-edit-tag-wrap");
+  if (type === "out") {
+    tagWrap.style.display = "block";
+    const allTags = [...new Set([...p.tags, ...p.expenses.map(e => e.tag).filter(Boolean)])];
+    const sel = document.getElementById("txn-edit-tag");
+    sel.innerHTML = `<option value="">${t("no_tag_opt")}</option>` +
+      allTags.map(tag => `<option value="${esc(tag)}" ${item.tag === tag ? "selected" : ""}>${esc(tag)}</option>`).join("");
+  } else {
+    tagWrap.style.display = "none";
+  }
+
+  const btn = document.getElementById("txn-save-btn");
+  btn.style.background = type === "in" ? "#2e7d32" : "#c62828";
+  btn.style.color = "#fff";
+  btn.style.border = "none";
+
+  document.getElementById("sheet-edit-txn").classList.add("open");
+  setTimeout(() => document.getElementById("txn-edit-amount").focus(), 300);
+}
+
+function closeTxnSheet(e) {
+  if (!e || e.target === document.getElementById("sheet-edit-txn")) {
+    document.getElementById("sheet-edit-txn").classList.remove("open");
+    editTxnId = null;
+    editTxnType = null;
+  }
+}
+
+function saveTxnEdit() {
+  const amt = parseFloat(document.getElementById("txn-edit-amount").value);
+  if (!amt || amt <= 0) { showToast(t("toast_valid_amount")); return; }
+  const date = document.getElementById("txn-edit-date").value || TODAY;
+  const note = document.getElementById("txn-edit-note").value.trim();
+  const tag  = editTxnType === "out" ? document.getElementById("txn-edit-tag").value : undefined;
+
+  updateProject(p => {
+    if (editTxnType === "in") {
+      const i = p.receipts.findIndex(r => r.id === editTxnId);
+      if (i >= 0) p.receipts[i] = { ...p.receipts[i], amount: amt, date, note };
+    } else {
+      const i = p.expenses.findIndex(e => e.id === editTxnId);
+      if (i >= 0) p.expenses[i] = { ...p.expenses[i], amount: amt, date, note, tag };
+    }
+  });
+
+  document.getElementById("sheet-edit-txn").classList.remove("open");
+  editTxnId = null; editTxnType = null;
+  showToast(t("toast_txn_updated"));
+  renderHistory();
+  renderDash();
+  showScreen("history");
+}
+
+// ═══════════════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════
+function exportAll() {
+  const blob = new Blob([JSON.stringify(projects,null,2)],{type:"application/json"});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href=url; a.download=`expense_tracker_${TODAY}.json`; a.click();
+  URL.revokeObjectURL(url);
+  showToast(t("toast_exported"));
+}
+
+function importAll(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (Array.isArray(parsed)) { projects=parsed; save(); renderHome(); showToast(t("toast_imported")); }
+      else showToast(t("toast_invalid_file"));
+    } catch { showToast(t("toast_cannot_read")); }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+}
+
+// ═══════════════════════════════════════════════════════
+//  PWA: SERVICE WORKER + INSTALL PROMPT
+// ═══════════════════════════════════════════════════════
+let deferredInstallPrompt = null;
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById("install-banner").classList.add("show");
+});
+
+window.addEventListener("appinstalled", () => {
+  document.getElementById("install-banner").classList.remove("show");
+  deferredInstallPrompt = null;
+  showToast(t("toast_app_installed"));
+});
+
+function installApp() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(()=>{
+    deferredInstallPrompt = null;
+    document.getElementById("install-banner").classList.remove("show");
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+load();
+applyLang();
+renderHome();
+
+</script>
+</body>
+</html>
