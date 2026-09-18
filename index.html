@@ -213,6 +213,22 @@
   /* ── Chart container ── */
   .chart-wrap{position:relative;height:200px;margin:4px 0}
 
+  /* ── Header logo ── */
+  .hdr-logo{height:34px;width:34px;object-fit:contain;border-radius:8px;flex-shrink:0}
+
+  /* ── History search/filter bar ── */
+  .hist-filter-bar{background:var(--s0);border-radius:16px;border:1px solid var(--outline);overflow:hidden;margin-bottom:10px}
+  .hist-search-row{display:flex;align-items:center;gap:8px;padding:8px 10px}
+  .hist-search-wrap{display:flex;align-items:center;flex:1;background:var(--s-low);border-radius:10px;padding:6px 10px;gap:6px;border:1px solid var(--outline)}
+  .hist-search-inp{border:none;background:transparent;font-size:14px;font-family:inherit;color:var(--on-s);outline:none;flex:1;min-width:0}
+  .hist-search-inp::placeholder{color:var(--on-sv)}
+  .hist-clear-btn{background:none;border:none;cursor:pointer;color:var(--on-sv);line-height:1;padding:0;display:flex}
+  .hist-filter-toggle{background:var(--s-low);border:1px solid var(--outline);border-radius:10px;padding:7px 10px;cursor:pointer;color:var(--on-sv);display:flex;align-items:center;position:relative;flex-shrink:0}
+  .hist-filter-toggle.active{background:#e3f2fd;border-color:#1565c0;color:#1565c0}
+  .hist-filter-dot{position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:#1565c0;border:1.5px solid var(--s0)}
+  .hist-filter-body{border-top:1px solid var(--outline);padding:10px 12px 12px;background:var(--s-low)}
+  .hist-type-row{display:flex;gap:6px;margin-bottom:4px}
+
   /* ── Misc ── */
   .row-sb{display:flex;align-items:center;justify-content:space-between}
   .row{display:flex;align-items:center;gap:8px}
@@ -269,7 +285,7 @@
   <div class="screen active" id="screen-home">
     <header class="hdr">
       <div class="row">
-        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <img src="icons/logo.webp" class="hdr-logo" alt="Expense Tracker">
         <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
       </div>
       <div class="hdr-actions">
@@ -294,7 +310,7 @@
   <div class="screen" id="screen-projects">
     <header class="hdr">
       <div class="row">
-        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <img src="icons/logo.webp" class="hdr-logo" alt="Expense Tracker">
         <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
       </div>
       <div class="hdr-actions">
@@ -322,7 +338,7 @@
   <div class="screen" id="screen-reports">
     <header class="hdr">
       <div class="row">
-        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <img src="icons/logo.webp" class="hdr-logo" alt="Expense Tracker">
         <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
       </div>
       <div class="hdr-actions">
@@ -352,7 +368,7 @@
   <div class="screen" id="screen-settings">
     <header class="hdr">
       <div class="row">
-        <button class="icon-btn"><span class="mdi">account_circle</span></button>
+        <img src="icons/logo.webp" class="hdr-logo" alt="Expense Tracker">
         <div class="hdr-title" data-i18n="hdr_title">Expense Tracker</div>
       </div>
       <div class="hdr-actions">
@@ -724,7 +740,14 @@ const i18n = {
     confirm_clear_all:"Clear all data? This cannot be undone.", toast_cleared:"All data cleared",
     quick_actions:"Quick Actions", add_txn_title:"New Transaction",
     txn_type_expense:"Expense", txn_type_income:"Money In", toast_coming_soon:"Coming soon",
-    import_label:"Import", export_label:"Export"
+    import_label:"Import", export_label:"Export",
+    filter_by_tags:"Filter by tag",
+    search_ph:"Search transactions…",
+    filter_type_all:"All",
+    filter_type_in:"Money In",
+    filter_type_out:"Expense",
+    clear_filters:"Clear filters",
+    history_filter:"Filter"
   },
   ta: {
     app_title:"செலவு கணக்கு",
@@ -867,7 +890,14 @@ const i18n = {
     confirm_clear_all:"அனைத்து தரவையும் அழிக்கவா? இதை மீட்டெடுக்க முடியாது.", toast_cleared:"அனைத்து தரவும் அழிக்கப்பட்டது",
     quick_actions:"விரைவு செயல்கள்", add_txn_title:"புதிய பரிவர்த்தனை",
     txn_type_expense:"செலவு", txn_type_income:"பணம் வந்தது", toast_coming_soon:"விரைவில் வரும்",
-    import_label:"இறக்குமதி", export_label:"ஏற்றுமதி"
+    import_label:"இறக்குமதி", export_label:"ஏற்றுமதி",
+    filter_by_tags:"குறிச்சொலால் வடிகட்டு",
+    search_ph:"பரிவர்த்தனைகளை தேடவும்…",
+    filter_type_all:"அனைத்தும்",
+    filter_type_in:"பணம் வந்தது",
+    filter_type_out:"செலவு",
+    clear_filters:"வடிகட்டல்களை அழி",
+    history_filter:"வடிகட்டு"
   }
 };
 
@@ -924,6 +954,13 @@ function toggleLang() { setLang(lang === "en" ? "ta" : "en"); }
 // ═══════════════════════════════════════════════════════
 const STORE = "et_projects_v1";
 const TAG_COLORS = ["#639922","#185FA5","#D85A30","#BA7517","#993556","#1D9E75","#534AB7","#993C1D","#3B6D11","#0F6E56"];
+const TAG_I18N_KEYS = {
+  "Cement":"sug_cement","Labour":"sug_labour","Steel":"sug_steel","Sand":"sug_sand",
+  "Bricks":"sug_bricks","Plumbing":"sug_plumbing","Electrical":"sug_electrical",
+  "Tiles":"sug_tiles","Paint":"sug_paint","Woodwork":"sug_woodwork",
+  "Foundation":"sug_foundation","Roofing":"sug_roofing"
+};
+function tagDisplay(name) { return TAG_I18N_KEYS[name] ? t(TAG_I18N_KEYS[name]) : name; }
 const TODAY = new Date().toISOString().slice(0,10);
 
 let projects = [];
@@ -932,8 +969,13 @@ let filterFrom = "";
 let filterTo   = "";
 let activePreset = "all";
 let filterOpen = false;
+let filterTags = new Set();
 let chartInstance = null;
 let currentTxnType = "out";
+let historySearch = "";
+let historyFilterTags = new Set();
+let historyFilterType = "all";
+let historyFilterOpen = false;
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 function fmt(n) { return "₹" + Number(n).toLocaleString("en-IN", {minimumFractionDigits:0}); }
@@ -989,11 +1031,17 @@ function applyCustomRange() {
 }
 
 function clearFilter() {
-  activePreset="all"; filterFrom=""; filterTo=""; filterOpen=false;
+  activePreset="all"; filterFrom=""; filterTo=""; filterTags.clear(); filterOpen=false;
   renderDash();
 }
 
 function toggleFilter() { filterOpen = !filterOpen; renderDash(); }
+
+function toggleFilterTag(tagName) {
+  if (filterTags.has(tagName)) filterTags.delete(tagName);
+  else filterTags.add(tagName);
+  renderDash();
+}
 
 function filterLabel() {
   if (activePreset==="today")  return t("filter_today");
@@ -1364,7 +1412,10 @@ function showSubScreen(sub) {
     showScreen("addTxn"); return;
   }
   if (sub === "tags")    { renderTags();    showScreen("tags");    return; }
-  if (sub === "history") { renderHistory(); showScreen("history"); return; }
+  if (sub === "history") {
+    historySearch=""; historyFilterTags.clear(); historyFilterType="all"; historyFilterOpen=false;
+    renderHistory(); showScreen("history"); return;
+  }
 }
 
 function openProject(id) {
@@ -1455,18 +1506,18 @@ function renderHome() {
 function renderDash() {
   const p = currentProject(); if (!p) return;
   const fR = p.receipts.filter(r=>inRange(r.date));
-  const fE = p.expenses.filter(e=>inRange(e.date));
+  const fE = p.expenses.filter(e=>inRange(e.date) && (filterTags.size===0 || filterTags.has(e.tag)));
   const tIn  = fR.reduce((s,r)=>s+Number(r.amount),0);
   const tOut = fE.reduce((s,e)=>s+Number(e.amount),0);
   const bal  = tIn - tOut;
-  const isFiltered = activePreset !== "all";
+  const isFiltered = activePreset !== "all" || filterTags.size > 0;
   const lbl = filterLabel();
   const allTags = [...new Set([...p.tags, ...p.expenses.map(e=>e.tag).filter(Boolean)])];
 
   // Tag totals for pie
   const tagTotals = {};
   fE.forEach(e=>{ const tagKey=e.tag||t("untagged"); tagTotals[tagKey]=(tagTotals[tagKey]||0)+Number(e.amount); });
-  const pieEntries = Object.entries(tagTotals);
+  const pieEntries = Object.entries(tagTotals).map(([k,v])=>[tagDisplay(k),v]);
 
   // Filter bar HTML
   const filterHTML = `
@@ -1497,6 +1548,10 @@ function renderDash() {
             <input type="date" id="fr-to" class="inp" style="font-size:13px;padding:8px 10px" value="${filterTo}"/></div>
         </div>
         <button onclick="applyCustomRange()" style="width:100%;background:#1565c0;border:none;border-radius:10px;padding:10px 0;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">${t("apply_custom_range")}</button>
+        ${allTags.length>0?`<p class="section-title" style="margin-top:12px;margin-bottom:6px">${t("filter_by_tags")}</p>
+        <div class="preset-chips">
+          ${allTags.map(tag=>`<button class="chip ${filterTags.has(tag)?"active":""}" onclick="toggleFilterTag('${esc(tag)}')">${esc(tagDisplay(tag))}</button>`).join("")}
+        </div>`:""}
       </div>
     </div>`;
 
@@ -1525,7 +1580,7 @@ function renderDash() {
         <div class="tag-row">${allTags.map((tag,i)=>{
           const tot=fE.filter(e=>e.tag===tag).reduce((s,e)=>s+Number(e.amount),0);
           return `<div class="tag-pill" style="background:${TAG_COLORS[i%TAG_COLORS.length]}22;border:1.5px solid ${TAG_COLORS[i%TAG_COLORS.length]}">
-            <span style="color:${TAG_COLORS[i%TAG_COLORS.length]};font-weight:700">${esc(tag)}</span>
+            <span style="color:${TAG_COLORS[i%TAG_COLORS.length]};font-weight:700">${esc(tagDisplay(tag))}</span>
             ${tot>0?`<span style="color:#666">${fmt(tot)}</span>`:""}
           </div>`;
         }).join("")}</div>
@@ -1581,7 +1636,7 @@ function renderTags() {
           <div class="row">
             <div style="width:12px;height:12px;border-radius:50%;background:${TAG_COLORS[i%TAG_COLORS.length]};flex-shrink:0"></div>
             <div>
-              <div style="font-weight:600;font-size:15px;color:#1a1a1a">${esc(tag)}</div>
+              <div style="font-weight:600;font-size:15px;color:#1a1a1a">${esc(tagDisplay(tag))}</div>
               <div style="font-size:12px;color:#888">${cnt} ${entryWord} · ${fmt(tot)}</div>
             </div>
           </div>
@@ -1590,9 +1645,9 @@ function renderTags() {
       }).join("");
 
   const suggestions = [
-    t("sug_cement"),t("sug_labour"),t("sug_steel"),t("sug_sand"),
-    t("sug_bricks"),t("sug_plumbing"),t("sug_electrical"),t("sug_tiles"),
-    t("sug_paint"),t("sug_woodwork"),t("sug_foundation"),t("sug_roofing")
+    {key:"sug_cement",en:"Cement"},{key:"sug_labour",en:"Labour"},{key:"sug_steel",en:"Steel"},{key:"sug_sand",en:"Sand"},
+    {key:"sug_bricks",en:"Bricks"},{key:"sug_plumbing",en:"Plumbing"},{key:"sug_electrical",en:"Electrical"},{key:"sug_tiles",en:"Tiles"},
+    {key:"sug_paint",en:"Paint"},{key:"sug_woodwork",en:"Woodwork"},{key:"sug_foundation",en:"Foundation"},{key:"sug_roofing",en:"Roofing"}
   ];
   el.innerHTML = `
     <div class="card">
@@ -1602,7 +1657,7 @@ function renderTags() {
         <button onclick="addTag()" style="background:#2e7d32;border:none;border-radius:10px;padding:10px 18px;color:#fff;font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap;font-family:inherit">${t("add_tag_btn")}</button>
       </div>
       <div class="suggestion-chips">
-        ${suggestions.map(s=>`<button class="sug-chip" onclick="document.getElementById('new-tag-inp').value='${esc(s)}'">${s}</button>`).join("")}
+        ${suggestions.map(s=>`<button class="sug-chip" onclick="document.getElementById('new-tag-inp').value='${esc(s.en)}'">${esc(t(s.key))}</button>`).join("")}
       </div>
     </div>
     ${tagListHTML}`;
@@ -1611,26 +1666,86 @@ function renderTags() {
 // ═══════════════════════════════════════════════════════
 //  HISTORY RENDER
 // ═══════════════════════════════════════════════════════
+function applyHistorySearch() {
+  historySearch = (document.getElementById("hist-search")||{}).value||"";
+  historySearch = historySearch.toLowerCase().trim();
+  renderHistory();
+}
+function toggleHistoryFilter() { historyFilterOpen=!historyFilterOpen; renderHistory(); }
+function toggleHistoryFilterTag(tagName) {
+  if (historyFilterTags.has(tagName)) historyFilterTags.delete(tagName);
+  else historyFilterTags.add(tagName);
+  renderHistory();
+}
+function setHistoryType(type) { historyFilterType=type; renderHistory(); }
+function clearHistoryFilter() {
+  historySearch=""; historyFilterTags.clear(); historyFilterType="all"; historyFilterOpen=false;
+  renderHistory();
+}
+
 function renderHistory() {
   const p = currentProject(); if (!p) return;
-  const isFiltered = activePreset !== "all";
-  const fR = p.receipts.filter(r=>inRange(r.date));
-  const fE = p.expenses.filter(e=>inRange(e.date));
-  const timeline = [
-    ...fR.map(r=>({...r,type:"in"})),
-    ...fE.map(e=>({...e,type:"out"}))
+  const allTags = [...new Set([...p.tags, ...p.expenses.map(e=>e.tag).filter(Boolean)])];
+  const isDateFiltered = activePreset !== "all";
+  let allItems = [
+    ...p.receipts.filter(r=>inRange(r.date)).map(r=>({...r,type:"in"})),
+    ...p.expenses.filter(e=>inRange(e.date)).map(e=>({...e,type:"out"}))
   ].sort((a,b)=>new Date(b.date)-new Date(a.date));
 
+  // Apply history-specific filters
+  if (historyFilterType!=="all") allItems = allItems.filter(i=>i.type===historyFilterType);
+  if (historyFilterTags.size>0)  allItems = allItems.filter(i=>historyFilterTags.has(i.tag));
+  if (historySearch) {
+    allItems = allItems.filter(i=>{
+      const note=(i.note||"").toLowerCase();
+      const tag=(i.tag||"").toLowerCase();
+      const tagD=tagDisplay(i.tag||"").toLowerCase();
+      const amt=String(i.amount);
+      return note.includes(historySearch)||tag.includes(historySearch)||tagD.includes(historySearch)||amt.includes(historySearch);
+    });
+  }
+
+  const hasAnyFilter = historySearch||historyFilterTags.size>0||historyFilterType!=="all"||isDateFiltered;
   const el = document.getElementById("history-content");
-  const txnWord = timeline.length===1 ? t("transaction_singular") : t("transaction_plural");
-  let html = `<p class="muted" style="margin-bottom:12px">${timeline.length} ${txnWord}${isFiltered?" · "+filterLabel():""}</p>`;
-  if (timeline.length===0) {
-    html += `<p style="text-align:center;color:#bbb;margin-top:40px;font-size:14px">${isFiltered?t("no_txn_period"):t("no_txn_yet")}</p>`;
+
+  // Search + filter bar
+  const filterBar = `
+    <div class="hist-filter-bar">
+      <div class="hist-search-row">
+        <div class="hist-search-wrap">
+          ${icon("search",18)}
+          <input type="text" id="hist-search" class="hist-search-inp" placeholder="${t("search_ph")}" value="${esc(historySearch)}" oninput="applyHistorySearch()"/>
+          ${historySearch?`<button onclick="historySearch='';renderHistory()" class="hist-clear-btn">${icon("close",16)}</button>`:""}
+        </div>
+        <button class="hist-filter-toggle ${historyFilterOpen?"active":""}" onclick="toggleHistoryFilter()">
+          ${icon("tune",18)}
+          ${historyFilterTags.size>0||historyFilterType!=="all"?`<span class="hist-filter-dot"></span>`:""}
+        </button>
+      </div>
+      ${historyFilterOpen?`
+      <div class="hist-filter-body">
+        <div class="hist-type-row">
+          ${[["all",t("filter_type_all")],["in",t("filter_type_in")],["out",t("filter_type_out")]].map(([v,l])=>
+            `<button class="chip ${historyFilterType===v?"active":""}" onclick="setHistoryType('${v}')">${l}</button>`
+          ).join("")}
+        </div>
+        ${allTags.length>0?`<p class="section-title" style="margin:8px 0 5px">${t("filter_by_tags")}</p>
+        <div class="preset-chips">
+          ${allTags.map(tag=>`<button class="chip ${historyFilterTags.has(tag)?"active":""}" onclick="toggleHistoryFilterTag('${esc(tag)}')">${esc(tagDisplay(tag))}</button>`).join("")}
+        </div>`:""}
+        ${hasAnyFilter?`<button onclick="clearHistoryFilter()" style="margin-top:8px;background:none;border:none;color:#c62828;font-size:12px;cursor:pointer;font-family:inherit;padding:0">${t("clear_filters")}</button>`:""}
+      </div>`:""}
+    </div>`;
+
+  const txnWord = allItems.length===1 ? t("transaction_singular") : t("transaction_plural");
+  let html = filterBar + `<p class="muted" style="margin:8px 0 12px">${allItems.length} ${txnWord}${isDateFiltered?" · "+filterLabel():""}</p>`;
+
+  if (allItems.length===0) {
+    html += `<p style="text-align:center;color:#bbb;margin-top:40px;font-size:14px">${hasAnyFilter?t("no_txn_period"):t("no_txn_yet")}</p>`;
   } else {
-    // Group transactions by date (timeline already sorted newest-first)
     const groups = [];
     const groupIndex = {};
-    timeline.forEach(item=>{
+    allItems.forEach(item=>{
       if (groupIndex[item.date]===undefined) { groupIndex[item.date]=groups.length; groups.push({date:item.date, items:[]}); }
       groups[groupIndex[item.date]].items.push(item);
     });
@@ -1647,9 +1762,9 @@ function renderHistory() {
           </span>
         </div>`;
       g.items.forEach(item=>{
-        const title = item.type==="in" ? (item.note||t("money_received_default")) : (item.note||item.tag||t("expense_default"));
+        const title = item.type==="in" ? (item.note||t("money_received_default")) : (item.note||tagDisplay(item.tag)||t("expense_default"));
         const parts = [];
-        if (item.tag) parts.push(item.tag);
+        if (item.tag) parts.push(tagDisplay(item.tag));
         if (item.type==="in" && item.method) parts.push(t(item.method==="online"?"method_online":"method_cash"));
         const meta = parts.join(" · ");
         html += `
@@ -1714,7 +1829,7 @@ function populateTagSelect() {
   const p = currentProject(); if (!p) return;
   const allTags = [...new Set([...p.tags, ...p.expenses.map(e=>e.tag).filter(Boolean)])];
   const sel = document.getElementById("txn-tag");
-  sel.innerHTML = `<option value="">${t("select_tag_opt")}</option>` + allTags.map(tag=>`<option value="${esc(tag)}">${esc(tag)}</option>`).join("");
+  sel.innerHTML = `<option value="">${t("select_tag_opt")}</option>` + allTags.map(tag=>`<option value="${esc(tag)}">${esc(tagDisplay(tag))}</option>`).join("");
   const hint = document.getElementById("no-tag-hint");
   hint.dataset.hasNoTags = allTags.length===0 ? "1" : "0";
   hint.style.display = (allTags.length===0 && currentTxnType==="out") ? "block" : "none";
